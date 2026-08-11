@@ -2,6 +2,7 @@
 baseurl      = "https://lkwlhsy.github.io/LKWL.github.io/"
 languageCode = "zh-cn"
 title        = "LuckyWorldLine"
+theme        = "stack"
 
 # Set default language
 defaultContentLanguage = "zh"
