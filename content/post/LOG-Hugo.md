@@ -3,11 +3,10 @@ title: "Hugo Stack 主题本地化与发布记录"
 description: "记录 Stack v4 主题本地化、离线构建验证，以及通过 GitHub Actions 发布 Hugo 博客的流程。"
 date: 2026-08-11T13:12:11+08:00
 categories:
-    - Hugo
+    - LOG
 tags:
     - Hugo
-    - Stack
-    - GitHub Pages
+    - GitHub
     - 主题定制
 math: false
 comments: true
@@ -20,7 +19,12 @@ draft: false
 
 为了确保主题即使停止维护或上游仓库不可用，本站仍能继续构建，并且可以直接修改模板、样式和脚本，我将当前使用的主题完整保存在博客源码仓库中。
 
-## 本次修改
+> 代码构建基于：gpt-5.6-sol 
+>
+> 毕竟 Hugo 稀奇古怪的代码我也改不明白(
+---
+
+## 首次部署
 
 ### 1. 本地化 Stack 主题
 
@@ -72,29 +76,7 @@ i18n/zh.toml
 - 中文和英文菜单中的 GitHub 链接指向个人主页。
 - Hugo 构建继续使用当前项目站点地址；正式替换原 Hexo 根站点时，再将 `baseURL` 改为 `https://lkwlhsy.github.io/`。
 
-## 验证结果
-
-主题切换后，在以下条件下重新构建：
-
-- Go 不在 `PATH` 中；
-- 模块代理关闭；
-- 使用全新的 Hugo 缓存；
-- 不访问上游主题仓库。
-
-构建结果：
-
-```text
-中文页面：16
-英文页面：15
-输出文件：46
-迁移前后文件列表差异：0
-迁移前后 CSS/JavaScript 哈希差异：0
-构建退出状态：0
-```
-
-首页、英文首页、搜索、归档、关于和统计页面均成功生成。现有 Hugo 弃用警告仍然保留，但不影响本次构建。
-
-## Hugo 博客发布指令
+### 4. Hugo 博客发布指令
 
 本站使用 GitHub Actions 构建并部署 GitHub Pages。Hugo 本身没有针对这种工作流的 `hugo d`；真正触发部署的命令是：
 
@@ -102,7 +84,7 @@ i18n/zh.toml
 git push origin main
 ```
 
-### 新建文章
+### 5. 新建文章
 
 创建普通 Markdown 文章：
 
@@ -122,7 +104,7 @@ hugo new content post/my-new-post/index.md
 draft: false
 ```
 
-### 本地预览
+### 6. 本地预览
 
 预览包括草稿在内的内容：
 
@@ -136,7 +118,7 @@ hugo server -D
 http://localhost:1313/
 ```
 
-### 正式构建
+### 7. 正式构建
 
 ```bash
 hugo --gc --minify
@@ -144,7 +126,7 @@ hugo --gc --minify
 
 生成结果位于 `public/`，该目录由 Git 忽略，不需要手动提交。
 
-### 提交并发布一篇新文章
+### 8. 提交并发布一篇新文章
 
 先检查工作区：
 
@@ -173,7 +155,7 @@ git push origin main
 
 推送成功后，GitHub Actions 会自动执行 Hugo 构建并部署。可以在仓库的 **Actions** 页面查看 `build` 和 `deploy` 状态。
 
-### 接近 `hexo d` 的连续命令
+### 9. 接近 `hexo d` 的连续命令
 
 确认只需要提交指定文章时，可以使用：
 
@@ -186,13 +168,15 @@ git push origin main
 
 不建议把 `git add -A` 固定写入发布命令，因为它可能把尚未完成的配置、文章或其他文件一起提交。
 
-## 后续维护
+### 10. 后续维护
 
 主题源码现在由本站仓库保存。后续可以直接修改本地主题，但升级 Hugo 后仍应重新执行完整构建和页面检查。
 
 Google Fonts、KaTeX、Waline 和表情资源目前仍可能来自外部服务；主题源码本地化不等于所有浏览器端资源已经离线化。
 
-## 2026-08-11：Footer 模块、默认封面与经典首页
+---
+
+## 一期个性化(2026-08-11)：Footer 模块、默认卡片封面与原版 stack 首页
 
 本次调整继续采用站点根目录覆盖本地 Stack 主题的方式，没有直接修改 `themes/stack/`。这样既能自行定制，又能清楚地区分本站修改与主题原始源码。
 
@@ -584,26 +568,368 @@ config/_default/params.toml
 
 可以调整数组顺序来改变右侧模块顺序，也可以删除某一项来隐藏对应模块。若希望重新使用两列网格文章布局，将 `grid` 改为 `true`。
 
-### 5. 验证结果
 
-使用 Hugo Extended 0.164.0 进行正式构建：
+---
+## 二期个性化(2026-08-11)：文章信息框、LOG 分类与隐私政策
 
-```bash
-hugo --gc --minify
+第三次个性化参考了 Stack 博客文章底部的信息框结构，但实现继续保存在项目根目录，不直接修改 `themes/stack/`。本次内容包括：只在本篇 LOG 中手工加入章节横线、把标签与许可信息收进统一卡片、增加一行全局可配置文字、创建 LOG 分类，以及建立本站自己的隐私政策页面。
+
+### 1. 只在指定文章中加入章节横线
+
+参考文章中的章节横线并不是主题自动生成的，而是 Markdown 水平分隔线。在需要分隔的两个顶级章节之间写入：
+
+```markdown
+上一章的最后一段。
+
+
+### 2. 下一章标题
 ```
 
-实际结果：
+`---` 前后必须保留空行，避免被 Markdown 解释为其他语法。本轮只修改 `content/post/LOG.md`，没有建立全局标题样式，因此其他文章不会自动出现横线。
 
-- 构建退出码为 `0`。
-- 生成中文页面 `28` 个，处理图片 `7` 张。
-- 输出中没有 English 站点目录，页面也没有 English 切换入口。
-- 首页文章卡片、分类总览和 Hugo 分类页面均加载默认封面。
-- 文章正文页在没有专属 `image` 时不加载默认封面。
-- Footer 的版权占位符、内部统计链接、自定义 HTML 和署名 HTML 均按配置输出。
-- 运行时间脚本在真实浏览器中成功把 `{days}`、`{hours}` 和 `{minutes}` 替换为数值。
-- 临时将 `enabled` 设为 `false` 后重新构建，确认页面不再输出 `site-footer`；随后已恢复为 `true`。
-- 桌面端实际显示左侧导航、单列文章和右侧四个信息模块。
-- 在 `390 × 844` 窄屏浏览器中，侧栏按主题响应式规则隐藏，文章卡片和默认封面正常显示。
-- 构建继续报告 Hugo 0.158.0 以后配置键与主题接口的弃用警告；这些警告没有被隐藏或降级处理，本次功能修改未引入构建错误。
+本篇文章的第一个 `##` 标题前不加横线；第二个及后续顶级章节前手工加入。若未来不再需要某条横线，删除对应的 `---` 即可。
 
-验证输出写入系统临时目录，没有生成或提交站点根目录下的 `public/`、`resources/` 或诊断目录。
+### 3. 创建并使用 LOG 分类
+
+将本文 frontmatter 从：
+
+```yaml
+categories:
+    - Hugo
+```
+
+改为：
+
+```yaml
+categories:
+    - LOG
+```
+
+同时创建分类元数据文件：
+
+```text
+content/categories/LOG/_index.zh.md
+```
+
+文件内容：
+
+```yaml
+---
+title: "LOG"
+description: "记录本站建设、主题定制、维护与发布过程。"
+---
+```
+
+这里使用 `_index.zh.md`，因为分类项是 taxonomy term 列表页面，不是普通独立文章。构建后分类地址为：
+
+```text
+https://lkwlhsy.github.io/LKWL.github.io/categories/log/
+```
+
+### 4. 全局文章结尾信息框配置
+
+结构配置写在：
+
+```text
+config/_default/params.toml
+```
+
+增加：
+
+```toml
+[article.footerBox]
+    enabled           = true
+    showPersonalLabel = true
+    icon              = "messages"
+```
+
+字段说明：
+
+- `enabled`：是否把文章标签、许可协议和个性化标签放入统一卡片框。
+- `showPersonalLabel`：是否显示最后一行个性化文字。
+- `icon`：个性化文字前使用的本地 Stack SVG 图标名称；当前使用 `messages`。
+
+中文文字放在语言配置：
+
+```text
+config/_default/params.zh.toml
+```
+
+```toml
+[article]
+    headingAnchor = true
+    math          = false
+    readingTime   = true
+
+    [article.footerBox]
+        personalLabel = "个性化标签"
+
+    [article.license]
+        enabled = true
+        default = "采用 CC BY-NC-SA 4.0 许可协议"
+```
+
+以后只需修改 `personalLabel`，就能改变所有博文信息框的最后一行。例如：
+
+```toml
+[article.footerBox]
+    personalLabel = "感谢阅读，愿每一次记录都有回声。"
+```
+
+设置以下任一配置可以隐藏相应内容：
+
+```toml
+[article.footerBox]
+    enabled           = false # 恢复主题原本的无框布局
+    showPersonalLabel = false # 保留框，只隐藏个性化标签
+
+[article.license]
+    enabled = false           # 全站隐藏许可协议
+```
+
+单篇文章仍可通过 frontmatter 隐藏许可协议：
+
+```yaml
+license: false
+```
+
+信息框只应用于 `post` 栏目。隐私政策、关于页面等独立页面不会显示这块博客文章信息框。
+
+### 5. 覆盖文章 Footer 模板
+
+新增根目录覆盖文件：
+
+```text
+layouts/_partials/article/components/footer.html
+```
+
+完整代码：
+
+```go-html-template
+{{- $footerBox := .Site.Params.article.footerBox -}}
+{{- $showFooterBox := and $footerBox.enabled (eq .Section "post") -}}
+<footer class="article-meta article-footer">
+    {{- if $showFooterBox -}}
+    <div class="article-footer-info">
+        {{ partial "article/components/tags" . }}
+
+        {{ if and (.Site.Params.article.license.enabled) (not (eq .Params.license false)) }}
+        <section class="article-copyright inline-meta">
+            {{ partial "helper/icon" "copyright" }}
+            <span>{{ default .Site.Params.article.license.default .Params.license | markdownify }}</span>
+        </section>
+        {{ end }}
+
+        {{ if and $footerBox.showPersonalLabel $footerBox.personalLabel }}
+        <section class="article-personal-label inline-meta">
+            {{ partial "helper/icon" (default "messages" $footerBox.icon) }}
+            <span>{{ $footerBox.personalLabel | markdownify }}</span>
+        </section>
+        {{ end }}
+    </div>
+    {{- else -}}
+        {{ partial "article/components/tags" . }}
+
+        {{ if and (.Site.Params.article.license.enabled) (not (eq .Params.license false)) }}
+        <section class="article-copyright inline-meta">
+            {{ partial "helper/icon" "copyright" }}
+            <span>{{ default .Site.Params.article.license.default .Params.license | markdownify }}</span>
+        </section>
+        {{ end }}
+    {{- end -}}
+
+    {{- if ne .Lastmod .Date -}}
+    <section class="article-lastmod inline-meta">
+        {{ partial "helper/icon" "clock" }}
+        <span>
+            {{ T "article.lastUpdatedOn" }} {{ .Lastmod | time.Format .Site.Params.dateFormat.lastUpdated }}
+        </span>
+    </section>
+    {{- end -}}
+</footer>
+```
+
+模板先判断当前页面是否属于 `post`，再决定是否使用卡片。文章最后更新时间仍保留在卡片外，避免改变 Stack 原有语义。
+
+### 6. 为标签增加图标和链接容器
+
+新增：
+
+```text
+layouts/_partials/article/components/tags.html
+```
+
+完整代码：
+
+```go-html-template
+{{ if .Params.Tags }}
+    <section class="article-tags">
+        {{ partial "helper/icon" "tag" }}
+        <div class="article-tags-links">
+            {{ range (.GetTerms "tags") }}
+                <a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>
+            {{ end }}
+        </div>
+    </section>
+{{ end }}
+```
+
+主题原模板只输出一组 `<a>`；这里增加本地 `tag.svg` 图标和 `.article-tags-links` 容器，使图标、标签和换行能够稳定排列。
+
+### 7. 信息框 SCSS
+
+新增：
+
+```text
+assets/scss/partials/custom-components/_article-footer.scss
+```
+
+主要样式：
+
+```scss
+.article-page .main-article .article-footer {
+    .article-footer-info {
+        margin-top: 2rem;
+        padding: 1.6rem 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+        background: var(--card-background-selected);
+        border: 1px solid var(--card-separator-color);
+        border-radius: 8px;
+
+        .article-tags,
+        .article-copyright,
+        .article-personal-label {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--card-text-color-secondary);
+            font-size: 1.4rem;
+            line-height: 1.4;
+            background: transparent;
+            border: 0;
+        }
+
+        .article-tags-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+    }
+}
+```
+
+实际文件还包含图标尺寸、标签悬停、暗色模式阴影和移动端间距。将它加入 `assets/scss/custom.scss`：
+
+```scss
+@import "partials/custom-components/article-footer";
+```
+
+这样样式继续通过 Hugo Pipes 编译，不需要修改本地主题副本。
+
+### 8. 创建隐私政策页面
+
+创建独立页面：
+
+```text
+content/privacy/index.zh.md
+```
+
+frontmatter：
+
+```yaml
+---
+title: "隐私政策"
+description: "说明本站在访问、评论和使用外部资源时可能涉及的数据处理。"
+date: 2026-08-11
+lastmod: 2026-08-11
+comments: false
+license: false
+toc: true
+---
+```
+
+正文根据本站当前实际配置编写，包含：
+
+- GitHub Pages 托管与可能的基础访问日志。
+- Waline 评论和浏览量；当前使用的是第三方演示服务，并非本站自托管。
+- 用户主动提交的昵称、邮箱、网站和评论内容。
+- Stack 使用 `localStorage` 保存明暗模式。
+- 当前未启用 Cookie 同意横幅、Google Analytics 和广告。
+- Google Fonts、unpkg、jsDelivr、KaTeX、PhotoSwipe、Mermaid 等外部资源可能收到网络请求所需的技术信息。
+- 评论删除与政策问题的联系邮箱。
+- 隐私政策是现状说明，不构成法律意见或特定司法辖区的合规保证。
+
+隐私页面关闭评论和文章许可，也不会显示只属于 `post` 的信息框。构建后的地址为：
+
+```text
+https://lkwlhsy.github.io/LKWL.github.io/privacy/
+```
+
+当 Waline 服务地址、分析工具、广告、托管平台或外部资源发生变化时，应同步更新隐私政策。
+
+### 9. 在站点 Footer 中加入隐私政策链接
+
+在 `config/_default/params.toml` 的 `[footer]` 中加入：
+
+```toml
+showPrivacyLink = true
+privacyLink     = "privacy/"
+```
+
+在中文语言配置的 `[footer]` 中加入：
+
+```toml
+privacyText = "隐私政策"
+```
+
+`layouts/_partials/footer/footer.html` 会判断 `privacyLink` 是站内相对地址还是外部地址。对于 `privacy/`，模板调用 `relLangURL`，自动生成包含项目仓库子路径的地址：
+
+```go-html-template
+{{- $privacyLink := default "privacy/" $footer.privacyLink -}}
+{{- $privacyURL := urls.Parse $privacyLink -}}
+{{- if and (not $privacyURL.Scheme) (not (strings.HasPrefix $privacyLink "#")) -}}
+    {{- $privacyLink = $privacyLink | relLangURL -}}
+{{- end -}}
+```
+
+因此不应把链接写成 `/privacy/`。以斜杠开头会忽略当前项目站点的 `/LKWL.github.io/` 子路径。
+
+隐藏 Footer 隐私链接：
+
+```toml
+showPrivacyLink = false
+```
+
+若未来改成外部隐私政策，可以直接填写完整网址：
+
+```toml
+privacyLink = "https://example.com/privacy/"
+```
+
+### 10. 模板自带的引用框示例
+
+截图中的浅色内容框是 Stack 对标准 Markdown `blockquote` 的默认样式，不需要增加 Shortcode、HTML 或模板覆盖。
+
+在 Markdown 中，每一段前加入 `>`：
+
+```markdown
+> 这是一个引用框示例。它可以用来填写提示、补充说明、文章签名或需要特别强调的内容。
+```
+
+多行内容可以连续书写：
+
+```markdown
+> **补充说明**
+>
+> 第一段内容。
+>
+> 第二段内容，也可以加入 [链接](https://gohugo.io/) 和其他 Markdown 格式。
+```
+
+下面是本文实际渲染的板块示例：
+
+> 记录不是终点，而是下一次修改的起点。这个引用框可以替换为文章签名、补充说明或任何希望在正文结尾强调的内容。

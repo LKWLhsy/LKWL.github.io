@@ -1,7 +1,7 @@
 {{ define "main" }}
 {{- $page := . -}}
 {{- $allPosts := slice -}}
-{{- range .Sites -}}
+{{- range hugo.Sites -}}
 {{- $allPosts = $allPosts | append (where .RegularPages "Section" "post") -}}
 {{- end -}}
 

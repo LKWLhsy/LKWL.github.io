@@ -17,13 +17,13 @@
             </button>
             {{ end }}
 
-            {{- $currentLanguageCode := .Language.Lang -}}
+            {{- $currentLanguageCode := .Language.Name -}}
             {{ if hugo.IsMultilingual }}
                 {{ range .Site.Home.AllTranslations }}
-                    {{ if ne .Language.Lang $currentLanguageCode }}
+                    {{ if ne .Language.Name $currentLanguageCode }}
                     <a href="{{ .Permalink }}" class="mobile-header-button" title="Switch Language">
                         <span class="language-label">
-                            {{- if eq .Language.Lang "en" -}}EN{{- else if eq .Language.Lang "zh" -}}中{{- else -}}{{ .Language.Lang | upper | truncate 2 "" }}{{- end -}}
+                            {{- if eq .Language.Name "en" -}}EN{{- else if eq .Language.Name "zh" -}}中{{- else -}}{{ .Language.Name | upper | truncate 2 "" }}{{- end -}}
                         </span>
                     </a>
                     {{ end }}
@@ -120,15 +120,15 @@
             
             <li class="menu-bottom-section" style="margin-top: auto;">
                 <ol class="menu">
-                    {{- $currentLanguageCode := .Language.Lang -}}
+                    {{- $currentLanguageCode := .Language.Name -}}
                     {{ if hugo.IsMultilingual }}
                         {{ $translations := .Site.Home.AllTranslations }}
                         {{ if eq (len $translations) 2 }}
                             {{ range $translations }}
-                                {{ if ne .Language.Lang $currentLanguageCode }}
+                                {{ if ne .Language.Name $currentLanguageCode }}
                                 <li id="i18n-switch">
                                     {{ partial "helper/icon" "language" }}
-                                    <a href="{{ .RelPermalink }}">{{ .Language.LanguageName }}</a>
+                                    <a href="{{ .RelPermalink }}">{{ .Language.Label }}</a>
                                 </li>
                                 {{ end }}
                             {{ end }}
@@ -137,7 +137,7 @@
                                 {{ partial "helper/icon" "language" }}
                                 <select name="language" onchange="window.location.href = this.selectedOptions[0].value">
                                     {{ range .Site.Home.AllTranslations }}
-                                        <option value="{{ .RelPermalink }}" {{ if eq .Language.Lang $currentLanguageCode }}selected{{ end }}>{{ .Language.LanguageName }}</option>
+                                        <option value="{{ .RelPermalink }}" {{ if eq .Language.Name $currentLanguageCode }}selected{{ end }}>{{ .Language.Label }}</option>
                                     {{ end }}
                                 </select>
                             </li>

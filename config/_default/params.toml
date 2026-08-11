@@ -13,10 +13,17 @@
     showRuntime      = true
     showCustomText   = true
     showPoweredBy    = true
+    showPrivacyLink  = true
+    privacyLink      = "privacy/"
 
 [cardImage]
     enabled = true
     default = "img/default-cover.jpg"
+
+[article.footerBox]
+    enabled           = true
+    showPersonalLabel = true
+    icon              = "messages"
 
 [widgets]
     homepage = [
@@ -37,7 +44,7 @@
     
 [comments.waline]
     # IMPORTANT: Replace this with your own Waline server URL!
-    serverURL    = "https://waline-demo.liuhouliang.com/"
+    serverURL    = "https://hugo-comment-umber.vercel.app/"
     pageview     = true
     emoji        = ["https://unpkg.com/@waline/emojis@1.0.1/weibo"]
     requiredMeta = ["name"]

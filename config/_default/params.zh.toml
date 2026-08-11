@@ -14,6 +14,7 @@ SortBy              = "default"
     runtimeText      = "已运行 {days} 天 {hours} 时 {minutes} 分"
     customText       = " "
     poweredByText    = "主题 <b><a href=\"https://github.com/CaiJimmy/hugo-theme-stack\" target=\"_blank\" rel=\"noopener\">Stack</a></b> 由 <a href=\"https://jimmycai.com\" target=\"_blank\" rel=\"noopener\">Jimmy</a> 设计"
+    privacyText      = "隐私政策"
 
 [dateFormat]
     # 使用当地日期格式
@@ -29,6 +30,9 @@ SortBy              = "default"
     headingAnchor = true
     math          = false
     readingTime   = true
+
+    [article.footerBox]
+        personalLabel = "感谢阅读"
 
     [article.license]
         enabled = true

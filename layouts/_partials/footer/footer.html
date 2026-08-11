@@ -61,9 +61,20 @@
         </section>
     {{- end -}}
 
-    {{- if and $footer.showPoweredBy $footer.poweredByText -}}
+    {{- if $footer.showPoweredBy -}}
+        {{- $privacyLink := default "privacy/" $footer.privacyLink -}}
+        {{- $privacyURL := urls.Parse $privacyLink -}}
+        {{- if and (not $privacyURL.Scheme) (not (strings.HasPrefix $privacyLink "#")) -}}
+            {{- $privacyLink = $privacyLink | relLangURL -}}
+        {{- end -}}
         <section class="powerby">
-            {{ $footer.poweredByText | safeHTML }}
+            {{- with $footer.poweredByText -}}
+                {{ . | safeHTML }}
+            {{- end -}}
+            {{- if and $footer.showPrivacyLink $footer.privacyText -}}
+                {{- with $footer.poweredByText }} | {{ end -}}
+                <a href="{{ $privacyLink }}">{{ $footer.privacyText }}</a>
+            {{- end -}}
         </section>
     {{- end -}}
 </footer>

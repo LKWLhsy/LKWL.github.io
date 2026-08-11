@@ -21,8 +21,8 @@
           
           const expandBtn = document.createElement('div');
           expandBtn.className = 'code-expand-btn';
-          expandBtn.dataset.expand = "{{ if eq .Site.Language.Lang `en` }}Expand Code{{ else }}展开代码{{ end }}";
-          expandBtn.dataset.collapse = "{{ if eq .Site.Language.Lang `en` }}Collapse Code{{ else }}收起代码{{ end }}";
+            expandBtn.dataset.expand = "{{ if eq .Site.Language.Name `en` }}Expand Code{{ else }}展开代码{{ end }}";
+            expandBtn.dataset.collapse = "{{ if eq .Site.Language.Name `en` }}Collapse Code{{ else }}收起代码{{ end }}";
           
           block.appendChild(expandBtn);
           

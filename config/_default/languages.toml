@@ -1,14 +1,14 @@
 [zh]
-    languageCode      = "zh-cn"
-    languageName      = "中文"
-    languagedirection = "ltr"
-    title             = "LKWLhsy"
-    weight            = 1
+    locale    = "zh-CN"
+    label     = "中文"
+    direction = "ltr"
+    title     = "LKWLhsy"
+    weight    = 1
 
 [en]
-    languageCode      = "en-us"
-    languageName      = "English"
-    languagedirection = "ltr"
-    title             = "LKWLhsy"
-    weight            = 2
-    disabled          = true
+    locale    = "en-US"
+    label     = "English"
+    direction = "ltr"
+    title     = "LKWLhsy"
+    weight    = 2
+    disabled  = true

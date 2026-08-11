@@ -75,7 +75,7 @@
                 <span class="article-meta-group" style="display: inline-flex; align-items: center; gap: var(--spacing-md);">
                     {{ partial "helper/icon" "language" }}
                     {{ range $Page.Translations }}
-                        <a href="{{ .RelPermalink }}" class="link">{{ .Language.LanguageName }}</a>
+                        <a href="{{ .RelPermalink }}" class="link">{{ .Language.Label }}</a>
                     {{ end }}
                 </span>
             </div>

@@ -14,6 +14,7 @@ SortBy              = "default"
     runtimeText        = "Running for {days} days {hours} hours {minutes} minutes"
     customText         = "Custom footer content"
     poweredByText      = "Built with <a href=\"https://gohugo.io/\" target=\"_blank\" rel=\"noopener\">Hugo</a> | Theme <b><a href=\"https://github.com/CaiJimmy/hugo-theme-stack\" target=\"_blank\" rel=\"noopener\">Stack</a></b> designed by <a href=\"https://jimmycai.com\" target=\"_blank\" rel=\"noopener\">Jimmy</a>"
+    privacyText        = "Privacy Policy"
 
 [dateFormat]
     published   = ":date_medium"
@@ -28,6 +29,9 @@ SortBy              = "default"
     headingAnchor = true
     math          = false
     readingTime   = true
+
+    [article.footerBox]
+        personalLabel = "Personal label"
 
     [article.license]
         enabled = true

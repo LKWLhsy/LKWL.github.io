@@ -1,0 +1,41 @@
+{{- $footerBox := .Site.Params.article.footerBox -}}
+{{- $showFooterBox := and $footerBox.enabled (eq .Section "post") -}}
+<footer class="article-meta article-footer">
+    {{- if $showFooterBox -}}
+    <div class="article-footer-info">
+        {{ partial "article/components/tags" . }}
+
+        {{ if and (.Site.Params.article.license.enabled) (not (eq .Params.license false)) }}
+        <section class="article-copyright inline-meta">
+            {{ partial "helper/icon" "copyright" }}
+            <span>{{ default .Site.Params.article.license.default .Params.license | markdownify }}</span>
+        </section>
+        {{ end }}
+
+        {{ if and $footerBox.showPersonalLabel $footerBox.personalLabel }}
+        <section class="article-personal-label inline-meta">
+            {{ partial "helper/icon" (default "messages" $footerBox.icon) }}
+            <span>{{ $footerBox.personalLabel | markdownify }}</span>
+        </section>
+        {{ end }}
+    </div>
+    {{- else -}}
+        {{ partial "article/components/tags" . }}
+
+        {{ if and (.Site.Params.article.license.enabled) (not (eq .Params.license false)) }}
+        <section class="article-copyright inline-meta">
+            {{ partial "helper/icon" "copyright" }}
+            <span>{{ default .Site.Params.article.license.default .Params.license | markdownify }}</span>
+        </section>
+        {{ end }}
+    {{- end -}}
+
+    {{- if ne .Lastmod .Date -}}
+    <section class="article-lastmod inline-meta">
+        {{ partial "helper/icon" "clock" }}
+        <span>
+            {{ T "article.lastUpdatedOn" }} {{ .Lastmod | time.Format .Site.Params.dateFormat.lastUpdated }}
+        </span>
+    </section>
+    {{- end -}}
+</footer>
