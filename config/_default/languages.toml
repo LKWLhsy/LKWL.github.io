@@ -11,3 +11,4 @@
     languagedirection = "ltr"
     title             = "LKWLhsy"
     weight            = 2
+    disabled          = true

@@ -1,0 +1,10 @@
+{{- $context := .Context -}}
+{{- $image := partial "helper/image" (dict "Image" .Image "Resources" .Resources "Context" $context) -}}
+
+{{- if and (not $image) $context.Site.Params.cardImage.enabled -}}
+    {{- with $context.Site.Params.cardImage.default -}}
+        {{- $image = partial "helper/image" (dict "Image" . "Resources" resources "Context" $context) -}}
+    {{- end -}}
+{{- end -}}
+
+{{- return $image -}}

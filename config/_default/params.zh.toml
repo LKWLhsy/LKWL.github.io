@@ -2,13 +2,18 @@
 mainSections = ["post"]
 # 在 RSS 中输出全文
 rssFullContent = true
-favicon        = "img/favicon.jpg"
+favicon        = "img/me.jpg"
 
 # 排序方式: "default", "lastmod"
 SortBy              = "default"
 
 [footer]
-    customText = "这里可以自定义footer内容"
+    copyrightText    = "© {year} {title}"
+    runtimeIcon      = "🚀"
+    runtimeLoadingText = "正在计算运行时间..."
+    runtimeText      = "已运行 {days} 天 {hours} 时 {minutes} 分"
+    customText       = " "
+    poweredByText    = "主题 <b><a href=\"https://github.com/CaiJimmy/hugo-theme-stack\" target=\"_blank\" rel=\"noopener\">Stack</a></b> 由 <a href=\"https://jimmycai.com\" target=\"_blank\" rel=\"noopener\">Jimmy</a> 设计"
 
 [dateFormat]
     # 使用当地日期格式
@@ -18,7 +23,7 @@ SortBy              = "default"
 [sidebar]
     emoji    = "^_^"
     subtitle = "如果你不仅见过这个世界，还见过一些其他世界的东西，那么便算是真正的活过。"
-    avatar   = "img/avatar.jpg"
+    avatar   = "img/me.jpg"
 
 [article]
     headingAnchor = true

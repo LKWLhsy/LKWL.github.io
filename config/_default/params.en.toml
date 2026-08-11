@@ -2,13 +2,18 @@
 mainSections = ["post"]
 # Output page's full content in RSS.
 rssFullContent = true
-favicon        = "img/favicon.jpg"
+favicon        = "img/me.jpg"
 
 # Accepted values: "default", "lastmod"
 SortBy              = "default"
 
 [footer]
-    customText = "Custom footer content"
+    copyrightText      = "© {year} {title}"
+    runtimeIcon        = "🚀"
+    runtimeLoadingText = "Calculating site runtime..."
+    runtimeText        = "Running for {days} days {hours} hours {minutes} minutes"
+    customText         = "Custom footer content"
+    poweredByText      = "Built with <a href=\"https://gohugo.io/\" target=\"_blank\" rel=\"noopener\">Hugo</a> | Theme <b><a href=\"https://github.com/CaiJimmy/hugo-theme-stack\" target=\"_blank\" rel=\"noopener\">Stack</a></b> designed by <a href=\"https://jimmycai.com\" target=\"_blank\" rel=\"noopener\">Jimmy</a>"
 
 [dateFormat]
     published   = ":date_medium"
@@ -17,7 +22,7 @@ SortBy              = "default"
 [sidebar]
     emoji    = "🚀"
     subtitle = "An starter template based on Hugo Theme Stack v4"
-    avatar   = "img/avatar.jpg"
+    avatar   = "img/me.jpg"
 
 [article]
     headingAnchor = true
