@@ -16,8 +16,8 @@ SortBy              = "default"
     lastUpdated = ":date_medium"
 
 [sidebar]
-    emoji    = "🚀"
-    subtitle = "这是一个基于 Hugo Theme Stack v4 的修改版本"
+    emoji    = "^_^"
+    subtitle = "如果你不仅见过这个世界，还见过一些其他世界的东西，那么便算是真正的活过。"
     avatar   = "img/avatar.jpg"
 
 [article]
