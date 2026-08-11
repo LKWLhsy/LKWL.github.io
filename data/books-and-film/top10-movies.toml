@@ -1,0 +1,29 @@
+title       = "个人 Top 10 电影"
+description = "对我影响最大或最喜欢的十部电影。榜单仍在整理中。"
+type        = "ranking"
+weight      = 1
+
+[[items]]
+    rank           = 1
+    title          = "星际穿越"
+    originalTitle  = "Interstellar"
+    year           = 2014
+    director       = "Christopher Nolan"
+    duration       = "168 分钟"
+    cover          = "img/books-and-film/movies/interstellar.jpg"
+    url            = "https://www.paramountpictures.com/movies/interstellar"
+    personalRating = 10.0
+    note            = "关于时间、选择与归途的科幻旅程。"
+    posterSource    = "https://public-website-assets.paramountpictures.com/paramount2025/s3fs-public/styles/poster_medium/public/intersteller_en_dvd_800x1200.jpg?itok=YxrRaJN2"
+
+[[items]]
+    rank           = 2
+    title          = "蜘蛛侠：崭新之日"
+    originalTitle  = "Spider-Man: Brand New Day"
+    year           = 2026
+    director       = "Destin Daniel Cretton"
+    cover          = "img/books-and-film/movies/spider-man-brand-new-day.jpg"
+    url            = "https://www.sonypictures.com/movies/spidermanbrandnewday"
+    status         = "待上映 / 评分待定"
+    note            = "用于展示榜单海报网格的待上映示例，名次并非最终评价。"
+    posterSource    = "https://www.sonypictures.com/sites/default/files/styles/max_860x460/public/title-key-art/spidermanbrandnewday_onesheet_1400x2100.jpg?itok=Nh6VAAh-"

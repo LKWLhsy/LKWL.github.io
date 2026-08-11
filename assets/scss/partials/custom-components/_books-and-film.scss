@@ -1,0 +1,313 @@
+.books-and-film-page {
+    .main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--section-separation);
+    }
+}
+
+.books-and-film-shell {
+    overflow: hidden;
+}
+
+.books-and-film-hero,
+.books-and-film-tab-panel {
+    padding: var(--card-padding);
+}
+
+.books-and-film-hero {
+    border-bottom: 1px solid var(--card-separator-color);
+
+    .books-and-film-kicker {
+        margin: 0 0 var(--spacing-sm);
+        color: var(--accent-color);
+        font-size: 1.3rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    h1 {
+        margin: 0;
+        color: var(--card-text-color-main);
+        font-size: 3rem;
+    }
+
+    > p:last-child {
+        margin: var(--spacing-sm) 0 0;
+        color: var(--card-text-color-secondary);
+        font-size: 1.6rem;
+    }
+}
+
+.books-and-film-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--card-padding) var(--card-padding) 0;
+
+    button {
+        padding: 0.75rem 1.4rem;
+        border: 2px solid var(--card-separator-color);
+        border-radius: 10px;
+        background: transparent;
+        color: var(--card-text-color-secondary);
+        font: inherit;
+        font-size: 1.5rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    button[aria-selected="true"] {
+        border-color: var(--accent-color);
+        background: var(--accent-color);
+        color: var(--accent-color-text);
+    }
+
+    button:focus-visible {
+        outline: 3px solid var(--accent-color);
+        outline-offset: 3px;
+    }
+}
+
+.books-and-film-tab-panel[hidden] {
+    display: none;
+}
+
+.books-and-film-section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+
+    h2 {
+        margin: 0;
+        padding-left: var(--spacing-md);
+        border-left: 4px solid var(--accent-color);
+        color: var(--card-text-color-main);
+        font-size: 2.4rem;
+    }
+
+    p {
+        margin: var(--spacing-sm) 0 0 calc(var(--spacing-md) + 4px);
+        color: var(--card-text-color-secondary);
+        font-size: 1.4rem;
+    }
+}
+
+.ranking-count {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--card-background-selected);
+    color: var(--card-text-color-secondary);
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-md);
+}
+
+.media-card {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--card-separator-color);
+    border-radius: var(--card-border-radius);
+    background: var(--card-background-selected);
+    box-shadow: var(--shadow-l1);
+}
+
+.ranking-badge {
+    position: absolute;
+    z-index: 2;
+    top: var(--spacing-sm);
+    left: var(--spacing-sm);
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: var(--accent-color);
+    color: var(--accent-color-text);
+    font-size: 1.25rem;
+    font-weight: 800;
+    box-shadow: var(--shadow-l1);
+}
+
+.media-poster {
+    aspect-ratio: 2 / 3;
+    background: var(--card-background);
+
+    a {
+        display: block;
+        height: 100%;
+    }
+
+    img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.media-poster-placeholder {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    color: var(--card-text-color-tertiary);
+    font-size: 4rem;
+    font-weight: 700;
+}
+
+.media-details {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: var(--spacing-md);
+}
+
+.media-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+
+    h3 {
+        margin: 0;
+        color: var(--card-text-color-main);
+        font-size: 1.6rem;
+        line-height: 1.3;
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+    }
+}
+
+.media-original-title,
+.media-year {
+    color: var(--card-text-color-tertiary);
+    font-size: 1.15rem;
+}
+
+.media-original-title {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 3px 0 0;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+}
+
+.media-year {
+    flex: 0 0 auto;
+}
+
+.media-meta {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    margin: var(--spacing-md) 0;
+
+    div {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--spacing-sm);
+    }
+
+    dt {
+        color: var(--card-text-color-tertiary);
+        font-size: 1.1rem;
+    }
+
+    dd {
+        overflow: hidden;
+        margin: 0;
+        color: var(--card-text-color-main);
+        font-size: 1.15rem;
+        font-weight: 700;
+        text-align: right;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.media-note {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 0;
+    color: var(--card-text-color-secondary);
+    font-size: 1.2rem;
+    line-height: 1.5;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.poster-source {
+    align-self: flex-start;
+    margin-top: auto;
+    padding-top: var(--spacing-md);
+    color: var(--card-text-color-tertiary);
+    font-size: 1.05rem;
+    text-decoration: underline;
+}
+
+.books-and-film-empty {
+    padding: var(--spacing-xl);
+    border: 1px dashed var(--card-separator-color);
+    border-radius: var(--card-border-radius);
+    color: var(--card-text-color-secondary);
+    text-align: center;
+}
+
+.year-subsection-title {
+    color: var(--card-text-color-main);
+}
+
+@media (min-width: 768px) {
+    .media-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1200px) {
+    .media-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767px) {
+    .books-and-film-hero h1 {
+        font-size: 2.5rem;
+    }
+
+    .books-and-film-section-heading {
+        align-items: center;
+    }
+
+    .media-details {
+        padding: var(--spacing-sm);
+    }
+
+    .media-title-row h3 {
+        font-size: 1.4rem;
+    }
+
+    .media-meta div {
+        display: block;
+    }
+
+    .media-meta dd {
+        margin-top: 2px;
+        text-align: left;
+    }
+
+    .media-note {
+        display: none;
+    }
+}

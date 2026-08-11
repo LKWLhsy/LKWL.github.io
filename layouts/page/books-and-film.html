@@ -1,0 +1,141 @@
+{{ define "body-class" }}article-page books-and-film-page{{ end }}
+
+{{ define "main" }}
+    {{- $collection := index hugo.Data "books-and-film" -}}
+    {{- $ranking := index $collection "top10-movies" -}}
+    {{- $yearData := index $collection "2026" -}}
+    {{- $movies := default (slice) $yearData.movies -}}
+    {{- $books := default (slice) $yearData.books -}}
+
+    <article class="books-and-film-shell card" data-books-film-tabs>
+        <header class="books-and-film-hero">
+            <p class="books-and-film-kicker">Books &amp; Film</p>
+            <h1>{{ .Title }}</h1>
+            {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
+        </header>
+
+        <nav class="books-and-film-tabs" role="tablist" aria-label="书与影分类">
+            <button type="button" role="tab" id="tab-top10" aria-controls="panel-top10" aria-selected="true" data-books-tab="top10">Top 10</button>
+            <button type="button" role="tab" id="tab-2026" aria-controls="panel-2026" aria-selected="false" tabindex="-1" data-books-tab="2026">2026</button>
+        </nav>
+
+        <section class="books-and-film-tab-panel" id="panel-top10" role="tabpanel" aria-labelledby="tab-top10" data-books-panel="top10">
+            <div class="books-and-film-section-heading">
+                <div>
+                    <h2>{{ $ranking.title }}</h2>
+                    {{ with $ranking.description }}<p>{{ . }}</p>{{ end }}
+                </div>
+                <span class="ranking-count">{{ len $ranking.items }} / 10</span>
+            </div>
+
+            <div class="media-grid">
+                {{ range sort $ranking.items "rank" "asc" }}
+                    {{- $item := . -}}
+                    {{- $poster := resources.Get .cover -}}
+                    <article class="media-card">
+                        <span class="ranking-badge" aria-label="排名第 {{ .rank }}">#{{ .rank }}</span>
+                        <div class="media-poster">
+                            {{ if .url }}<a href="{{ .url }}" target="_blank" rel="noopener noreferrer">{{ end }}
+                                {{ with $poster }}
+                                    {{- $preview := .Fill "520x780 webp q82" -}}
+                                    <img src="{{ $preview.RelPermalink }}" width="{{ $preview.Width }}" height="{{ $preview.Height }}" loading="lazy" alt="{{ $item.title }}海报">
+                                {{ else }}
+                                    <div class="media-poster-placeholder">{{ substr $item.title 0 1 }}</div>
+                                {{ end }}
+                            {{ if .url }}</a>{{ end }}
+                        </div>
+                        <div class="media-details">
+                            <div class="media-title-row">
+                                <div>
+                                    <h3>{{ if .url }}<a href="{{ .url }}" target="_blank" rel="noopener noreferrer">{{ end }}{{ .title }}{{ if .url }}</a>{{ end }}</h3>
+                                    {{ with .originalTitle }}<p class="media-original-title">{{ . }}</p>{{ end }}
+                                </div>
+                                <span class="media-year">{{ .year }}</span>
+                            </div>
+                            <dl class="media-meta">
+                                {{ with .director }}<div><dt>导演</dt><dd>{{ . }}</dd></div>{{ end }}
+                                {{ with .duration }}<div><dt>片长</dt><dd>{{ . }}</dd></div>{{ end }}
+                                {{ with .personalRating }}<div><dt>个人评分</dt><dd>★ {{ printf "%.1f" (float .) }}</dd></div>{{ end }}
+                                {{ with .status }}<div><dt>状态</dt><dd>{{ . }}</dd></div>{{ end }}
+                            </dl>
+                            {{ with .note }}<p class="media-note">{{ . }}</p>{{ end }}
+                            {{ with .posterSource }}<a class="poster-source" href="{{ . }}" target="_blank" rel="noopener noreferrer">海报来源</a>{{ end }}
+                        </div>
+                    </article>
+                {{ end }}
+            </div>
+        </section>
+
+        <section class="books-and-film-tab-panel" id="panel-2026" role="tabpanel" aria-labelledby="tab-2026" data-books-panel="2026" hidden>
+            <div class="books-and-film-section-heading">
+                <div>
+                    <h2>{{ $yearData.title }}</h2>
+                    {{ with $yearData.description }}<p>{{ . }}</p>{{ end }}
+                </div>
+            </div>
+
+            {{ if or $movies $books }}
+                {{ with $movies }}
+                    <h3 class="year-subsection-title">电影</h3>
+                    <div class="media-grid">
+                        {{ range . }}<article class="media-card media-card--compact"><div class="media-details"><h3>{{ .title }}</h3></div></article>{{ end }}
+                    </div>
+                {{ end }}
+                {{ with $books }}
+                    <h3 class="year-subsection-title">书籍</h3>
+                    <div class="media-grid">
+                        {{ range . }}<article class="media-card media-card--compact"><div class="media-details"><h3>{{ .title }}</h3></div></article>{{ end }}
+                    </div>
+                {{ end }}
+            {{ else }}
+                <div class="books-and-film-empty">2026 年的观影与阅读记录尚未添加。</div>
+            {{ end }}
+        </section>
+    </article>
+
+    <script>
+        (() => {
+            const root = document.querySelector('[data-books-film-tabs]');
+            if (!root) return;
+
+            const tabs = [...root.querySelectorAll('[data-books-tab]')];
+            const panels = [...root.querySelectorAll('[data-books-panel]')];
+            const validTabs = new Set(tabs.map((tab) => tab.dataset.booksTab));
+
+            const activate = (name, updateHash = false) => {
+                if (!validTabs.has(name)) name = 'top10';
+
+                tabs.forEach((tab) => {
+                    const active = tab.dataset.booksTab === name;
+                    tab.setAttribute('aria-selected', String(active));
+                    tab.tabIndex = active ? 0 : -1;
+                });
+                panels.forEach((panel) => {
+                    panel.hidden = panel.dataset.booksPanel !== name;
+                });
+
+                if (updateHash) history.replaceState(null, '', `#${name}`);
+            };
+
+            tabs.forEach((tab, index) => {
+                tab.addEventListener('click', () => activate(tab.dataset.booksTab, true));
+                tab.addEventListener('keydown', (event) => {
+                    if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+                    event.preventDefault();
+                    const offset = event.key === 'ArrowRight' ? 1 : -1;
+                    const next = tabs[(index + offset + tabs.length) % tabs.length];
+                    activate(next.dataset.booksTab, true);
+                    next.focus();
+                });
+            });
+
+            activate(location.hash.slice(1));
+        })();
+    </script>
+
+    {{ if not (eq .Params.comments false) }}
+        {{ partial "comments/include" . }}
+    {{ end }}
+
+    {{ partialCached "footer/footer" . }}
+{{ end }}

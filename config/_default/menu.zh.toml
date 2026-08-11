@@ -15,10 +15,26 @@
         icon = "archives"
 
 [[main]]
+    identifier = "photography"
+    name       = "摄影"
+    url        = "/photography/"
+    weight     = 3
+    [main.params]
+        icon = "camera"
+
+[[main]]
+    identifier = "books-and-film"
+    name       = "书与影"
+    url        = "/books-and-film/"
+    weight     = 4
+    [main.params]
+        icon = "book-movie"
+
+[[main]]
     identifier = "search"
     name       = "搜索"
     url        = "/search/"
-    weight     = 3
+    weight     = 5
     [main.params]
         icon = "search"
 
@@ -26,9 +42,9 @@
     identifier = "about"
     name       = "关于"
     url        = "/about/"
-    weight     = 4
+    weight     = 6
     [main.params]
-        icon = "user"      
+        icon = "user"
 
 [[social]]
     identifier = "github"

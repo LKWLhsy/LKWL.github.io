@@ -1,0 +1,65 @@
+{{ define "body-class" }}photography-page{{ end }}
+
+{{ define "main" }}
+    {{- $aspect := default "landscape" .Params.cardAspect -}}
+    {{- $validAspects := slice "landscape" "wide" "square" "portrait" -}}
+    {{- if not (in $validAspects $aspect) }}{{ $aspect = "landscape" }}{{ end -}}
+    {{- $fillSpecs := dict
+        "landscape" "720x480 webp q82"
+        "wide" "720x405 webp q82"
+        "square" "720x720 webp q82"
+        "portrait" "600x900 webp q82"
+    -}}
+
+    <article class="photography-shell card">
+        <header class="photography-hero">
+            <p class="photography-kicker">Photography Journal</p>
+            <h1>{{ .Title }}</h1>
+            {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
+        </header>
+
+        {{- $issues := sort .RegularPages "Params.issue" "desc" -}}
+        {{ if $issues }}
+            <section class="photography-issues photography-aspect-{{ $aspect }}" aria-label="摄影期刊">
+                {{ range $issues }}
+                    {{- $page := . -}}
+                    {{- $cover := false -}}
+                    {{- with .Params.demoImage -}}
+                        {{- $cover = resources.Get . -}}
+                    {{- else -}}
+                        {{- with .Params.cover -}}
+                            {{- $cover = $page.Resources.GetMatch . -}}
+                        {{- end -}}
+                    {{- end -}}
+                    {{- $photoCount := len (.Resources.Match "photos/*") -}}
+                    {{- if .Params.demoImage }}{{ $photoCount = 1 }}{{ end -}}
+
+                    <article class="photography-issue">
+                        <a href="{{ .RelPermalink }}" class="photography-issue-link">
+                            {{ with $cover }}
+                                {{- $preview := .Fill (index $fillSpecs $aspect) -}}
+                                <img src="{{ $preview.RelPermalink }}" width="{{ $preview.Width }}" height="{{ $preview.Height }}" loading="lazy" alt="{{ $page.Title }}">
+                            {{ end }}
+                            <div class="photography-issue-details">
+                                <div class="photography-issue-meta">
+                                    <span>第 {{ printf "%02d" (int .Params.issue) }} 期</span>
+                                    <time datetime="{{ .Date.Format `2006-01-02` }}">{{ .Date | time.Format "2006年1月2日" }}</time>
+                                </div>
+                                <h2>{{ .Title }}</h2>
+                                {{ with .Description }}<p>{{ . }}</p>{{ end }}
+                                <div class="photography-issue-foot">
+                                    {{ with .Params.location }}<span>{{ . }}</span>{{ end }}
+                                    <span>{{ $photoCount }} 张照片</span>
+                                </div>
+                            </div>
+                        </a>
+                    </article>
+                {{ end }}
+            </section>
+        {{ else }}
+            <div class="photography-empty">摄影作品尚未发布。</div>
+        {{ end }}
+    </article>
+
+    {{ partialCached "footer/footer" . }}
+{{ end }}

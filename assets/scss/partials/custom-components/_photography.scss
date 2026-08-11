@@ -1,0 +1,193 @@
+.photography-page {
+    .main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--section-separation);
+    }
+}
+
+.photography-shell {
+    overflow: hidden;
+}
+
+.photography-hero {
+    padding: var(--card-padding);
+    border-bottom: 1px solid var(--card-separator-color);
+
+    .photography-kicker {
+        margin: 0 0 var(--spacing-sm);
+        color: var(--accent-color);
+        font-size: 1.3rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    h1 {
+        margin: 0;
+        color: var(--card-text-color-main);
+        font-size: 3rem;
+    }
+
+    > p:last-child {
+        margin: var(--spacing-sm) 0 0;
+        color: var(--card-text-color-secondary);
+        font-size: 1.6rem;
+    }
+}
+
+.photography-issues {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    padding: var(--card-padding);
+}
+
+.photography-issue {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--card-separator-color);
+    border-radius: var(--card-border-radius);
+    background: var(--card-background-selected);
+    box-shadow: var(--shadow-l1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover,
+    &:focus-within {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-l2);
+    }
+
+    .photography-issue-link {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    img {
+        display: block;
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+    }
+}
+
+.photography-aspect-landscape .photography-issue img {
+    aspect-ratio: 3 / 2;
+}
+
+.photography-aspect-wide .photography-issue img {
+    aspect-ratio: 16 / 9;
+}
+
+.photography-aspect-square .photography-issue img {
+    aspect-ratio: 1;
+}
+
+.photography-aspect-portrait .photography-issue img {
+    aspect-ratio: 2 / 3;
+}
+
+.photography-issue-details {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: var(--spacing-md);
+
+    h2 {
+        margin: var(--spacing-sm) 0;
+        color: var(--card-text-color-main);
+        font-size: 1.7rem;
+        line-height: 1.35;
+    }
+
+    p {
+        display: -webkit-box;
+        overflow: hidden;
+        margin: 0;
+        color: var(--card-text-color-secondary);
+        font-size: 1.3rem;
+        line-height: 1.55;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+}
+
+.photography-issue-meta,
+.photography-issue-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    color: var(--card-text-color-tertiary);
+    font-size: 1.15rem;
+}
+
+.photography-issue-meta > span:first-child {
+    color: var(--accent-color);
+    font-weight: 700;
+}
+
+.photography-issue-foot {
+    margin-top: auto;
+    padding-top: var(--spacing-md);
+}
+
+.photography-empty,
+.photography-gallery-empty {
+    padding: var(--card-padding);
+    color: var(--card-text-color-secondary);
+    text-align: center;
+}
+
+.photography-single {
+    .photography-gallery-item {
+        overflow: hidden;
+        background: var(--card-background-selected);
+
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        figcaption {
+            padding: var(--spacing-sm) var(--spacing-md);
+        }
+    }
+
+    .article-content .gallery {
+        align-items: stretch;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+}
+
+@media (min-width: 768px) {
+    .photography-issues {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1200px) {
+    .photography-issues {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767px) {
+    .photography-hero h1 {
+        font-size: 2.5rem;
+    }
+
+    .photography-single .article-content .gallery {
+        display: block;
+
+        figure {
+            margin-bottom: var(--spacing-sm);
+        }
+    }
+}

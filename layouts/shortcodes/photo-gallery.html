@@ -1,0 +1,48 @@
+{{- $images := slice -}}
+{{- $global := .Get "global" -}}
+
+{{- if $global -}}
+    {{- with resources.Get $global -}}
+        {{- $images = $images | append . -}}
+    {{- else -}}
+        {{- warnf "Photography demo image %q was not found" $global -}}
+    {{- end -}}
+{{- else -}}
+    {{- $images = .Page.Resources.Match "photos/*" -}}
+{{- end -}}
+
+{{- if $images -}}
+    {{- range $images -}}
+        {{- $image := . -}}
+        {{- $thumbnail := $image.Fit "1200x1200 webp q82" -}}
+        {{- $lightbox := $image.Fit "2400x2400 webp q85" -}}
+        {{- $alt := $image.Name -}}
+        {{- $caption := "" -}}
+
+        {{- with $image.Params.alt }}{{ $alt = . }}{{ end -}}
+        {{- with $image.Params.caption }}{{ $caption = . }}{{ end -}}
+        {{- with $.Get "alt" }}{{ $alt = . }}{{ end -}}
+        {{- with $.Get "caption" }}{{ $caption = . }}{{ end -}}
+
+        <figure class="gallery-image photography-gallery-item"
+            style="flex-grow: {{ div (mul $thumbnail.Width 100) $thumbnail.Height }}; flex-basis: {{ div (mul $thumbnail.Width 240) $thumbnail.Height }}px">
+            <a
+                class="image-link"
+                href="{{ $lightbox.RelPermalink }}"
+                target="_blank"
+                data-pswp-width="{{ $lightbox.Width }}"
+                data-pswp-height="{{ $lightbox.Height }}">
+                <img
+                    class="gallery-image"
+                    src="{{ $thumbnail.RelPermalink }}"
+                    width="{{ $thumbnail.Width }}"
+                    height="{{ $thumbnail.Height }}"
+                    loading="lazy"
+                    alt="{{ $alt }}">
+            </a>
+            {{ with $caption }}<figcaption>{{ . }}</figcaption>{{ end }}
+        </figure>
+    {{- end -}}
+{{- else -}}
+    <p class="photography-gallery-empty">本期照片尚未上传。</p>
+{{- end -}}
