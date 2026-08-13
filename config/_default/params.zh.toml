@@ -13,7 +13,7 @@ SortBy              = "default"
     runtimeLoadingText = "正在计算运行时间..."
     runtimeText      = "已运行 {days} 天 {hours} 时 {minutes} 分"
     customText       = " "
-    poweredByText    = "主题 <b><a href=\"https://github.com/CaiJimmy/hugo-theme-stack\" target=\"_blank\" rel=\"noopener\">Stack</a></b> 由 <a href=\"https://jimmycai.com\" target=\"_blank\" rel=\"noopener\">Jimmy</a> 设计"
+    poweredByText    = "主题 <b><a href=\"https://github.com/CaiJimmy/hugo-theme-stack\" target=\"_blank\" rel=\"noopener\">Stack</a></b>由 <a href=\"https://jimmycai.com\" target=\"_blank\" rel=\"noopener\">Jimmy</a> 设计"
     privacyText      = "隐私政策"
 
 [dateFormat]

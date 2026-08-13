@@ -1,11 +1,23 @@
 {{- $images := slice -}}
 {{- $global := .Get "global" -}}
+{{- $files := .Get "files" -}}
 
 {{- if $global -}}
     {{- with resources.Get $global -}}
         {{- $images = $images | append . -}}
     {{- else -}}
         {{- warnf "Photography demo image %q was not found" $global -}}
+    {{- end -}}
+{{- else if $files -}}
+    {{- range split $files "," -}}
+        {{- $pattern := trim . " " -}}
+        {{- $resource := $.Page.Resources.GetMatch $pattern -}}
+        {{- if not $resource }}{{ $resource = $.Page.Resources.GetMatch (printf "photos/%s" $pattern) }}{{ end -}}
+        {{- with $resource -}}
+            {{- $images = $images | append . -}}
+        {{- else -}}
+            {{- warnf "Photography image %q was not found in the current Page Bundle" $pattern -}}
+        {{- end -}}
     {{- end -}}
 {{- else -}}
     {{- $images = .Page.Resources.Match "photos/*" -}}

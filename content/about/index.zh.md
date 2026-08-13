@@ -34,7 +34,7 @@ about_me:
     icon: "bike"
   - label: "邮箱"
     text: "infinity_sp@163.com"
-    link: "infinity_sp@163.com"
+    link: "https://lkwlhsy.github.io/LKWL.github.io/about/"
     icon: "mail"
 
 about_site:

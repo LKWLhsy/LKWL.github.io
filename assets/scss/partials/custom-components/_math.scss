@@ -1,0 +1,74 @@
+/* Display math uses a dedicated outer scrolling layer. */
+.main-article,
+.widget--toc {
+    .math-display-scroll {
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 0 0 0.8rem;
+        scrollbar-color: transparent transparent;
+        scrollbar-width: thin;
+        touch-action: pan-x;
+        -webkit-overflow-scrolling: touch;
+        outline: none;
+
+        &:hover,
+        &:focus-visible {
+            scrollbar-color: rgba(0, 0, 0, 0.28) transparent;
+        }
+
+        &::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        &::-webkit-scrollbar-track,
+        &::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: transparent;
+            border-radius: 999px;
+        }
+
+        &:hover::-webkit-scrollbar-thumb,
+        &:focus-visible::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.28);
+        }
+
+        &::-webkit-scrollbar-button {
+            display: none;
+            width: 0;
+            height: 0;
+        }
+    }
+
+    .math-display-content {
+        width: max-content;
+        min-width: 100%;
+
+        > mjx-container[display="true"] {
+            display: block !important;
+            width: max-content !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            margin: 1em auto;
+            overflow: visible !important;
+        }
+    }
+}
+
+[data-scheme="dark"] {
+    .main-article,
+    .widget--toc {
+        .math-display-scroll:hover,
+        .math-display-scroll:focus-visible {
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+
+        .math-display-scroll:hover::-webkit-scrollbar-thumb,
+        .math-display-scroll:focus-visible::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+    }
+}

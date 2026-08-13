@@ -24,15 +24,16 @@
                 {{ range $issues }}
                     {{- $page := . -}}
                     {{- $cover := false -}}
-                    {{- with .Params.demoImage -}}
-                        {{- $cover = resources.Get . -}}
+                {{- with .Params.demoImage -}}
+                    {{- $cover = $page.Resources.GetMatch . -}}
+                    {{- if not $cover }}{{ $cover = resources.Get . }}{{ end -}}
                     {{- else -}}
                         {{- with .Params.cover -}}
                             {{- $cover = $page.Resources.GetMatch . -}}
                         {{- end -}}
                     {{- end -}}
-                    {{- $photoCount := len (.Resources.Match "photos/*") -}}
-                    {{- if .Params.demoImage }}{{ $photoCount = 1 }}{{ end -}}
+                {{- $photoCount := len (.Resources.Match "photos/*") -}}
+                {{- if and (eq $photoCount 0) .Params.demoImage }}{{ $photoCount = 1 }}{{ end -}}
 
                     <article class="photography-issue">
                         <a href="{{ .RelPermalink }}" class="photography-issue-link">
