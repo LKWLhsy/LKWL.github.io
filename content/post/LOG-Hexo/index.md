@@ -15,8 +15,7 @@ draft: false
 <!--more-->
 
 ## 2025/11/7 迁移
-将blog从原电脑小新14pro迁移到thinkpad x1 carbon.
-
+将 blog 从原电脑 小新14pro 迁移到 thinkpad x1 carbon.
 1. 将 hexo 博客文件复制过去
 2. 在新电脑下载 git 与 nod.js（一路next即可，保持默认设置）
 3. 在blog根目录打开 git bash 并执行：
@@ -25,13 +24,14 @@ $ git config --global user.name "Github用户名"
 $ git config --global user.email "GitHub邮箱"
 $ ssh-keygen -t rsa -C "Github邮箱"
 ```
-随后即可在C:\Users\hsy\.ssh\id.rsa.pub 文档中找到 'ssh-rsa  xxxxxx'，全部复制下来，到GitHub的SSH key 中添加公共密钥。
+随后即可在 C:\Users\hsy\.ssh\id.rsa.pub 文档中找到 'ssh-rsa  xxxxxx' ，全部复制下来，到 GitHub 的 SSH key 中添加公共密钥。
+
 4. 最后进入git bash，执行：
 ```bash
 $ npm install hexo-cli -g
 $ npm install hexo-deployer-git --save
 ```
-注意，对于目前使用的snail模板，以上操作默认安装了hexo-4.7版本，目前Node.js最新为24版，需要下载18.20.8版本且将hexo-util卸载换为hexo-util-2.6.1版:
+注意，对于目前使用的 snail 模板，以上操作默认安装了 hexo-4.7 版本，目前 Node.js 最新为 24版 ，需要下载 18.20.8 版本且将 hexo-util 卸载换为 hexo-util-2.6.1版:
 ```cmd
 $ cd /d D:\hexo\LKWLhsyblog
 $ rmdir /s /q node_modules
@@ -42,14 +42,15 @@ $ npm install hexo-util@2.6.1 --save
 ```bash
 $ npm list --depth=0
 ```
-检查一下负责公式的包是否为hexo-renderer-kramed与hexo-renderer-mathjax（且不依赖原来默认的包），注意这样也要把D:\hexo\LKWLhsyblog\node_modules\hexo-renderer-mathjax\mathjax.HTML文件最后一行再改为snail文档中给的：
+检查一下负责公式的包是否为 hexo-renderer-kramed 与 hexo-renderer-mathjax（且不依赖原来默认的包），注意这样也要把 D:\hexo\LKWLhsyblog\node_modules\hexo-renderer-mathjax\mathjax.HTML 文件最后一行再改为 snail 文档中给的：
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 ```
-ps:也可能不用将模组全部删除，可能只需要一开始就下载Node.js 18.20.8且把hexo-util换成2.6.1版的就可以了，不过我没试过。
+ps: 也可能不用将模组全部删除，可能只需要一开始就下载 Node.js 18.20.8 且把 hexo-util 换成 2.6.1版 的就可以了，不过我没试过。
 
 ## 2025/11/7 snail 主题设置
 ### 预览设置
+
 ```yml
 #找到themes/snail/layout/index.ejs，有代码(注意区分有top与main两个部分的文章编辑)：
 <div class="post-content-preview">
@@ -69,7 +70,7 @@ ps:也可能不用将模组全部删除，可能只需要一开始就下载Node.
 ```
 
 ### 解决无法正常 hexo d 
-将deploy改成：
+将 deploy 改成：
 ```yml
 deploy:
   type: git
@@ -128,16 +129,12 @@ math:
 在此基础上 hexo 还存在对于公式太长原有 \(Latex\) 语法下行间公式使用 \\ 无法换行的问题，很可能是 Markdown 解析器把 \ 吞掉了；可以通过多添加一个 \ 进行转译：  
 例如：
 ```markdown
-
 $$
-
  \begin{aligned}
   V(x)=A + B x \\\\
   +C x^{2} + D x^{3}
  \end{aligned}
-
 $$
-
 ```
 
 代码块颜色问题暂时解决不了（其实代码显示上存在很多问题。。。

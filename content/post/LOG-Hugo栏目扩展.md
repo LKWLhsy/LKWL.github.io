@@ -1,6 +1,6 @@
 ---
 title: "Hugo 摄影与书与影栏目扩展记录"
-description: "记录摄影 Page Bundle、响应式画廊、书与影榜单、图片处理与栏目维护方法。"
+description: "记录摄影期刊、响应式图集、书与影个人榜单、图片压缩与后续维护方法。"
 date: 2026-08-12T00:00:00+08:00
 categories:
     - LOG
@@ -12,42 +12,316 @@ tags:
 comments: true
 math: false
 draft: false
+aliases:
+    - /post/log-栏目扩展/
 ---
 
-本文记录摄影和“书与影”两个长期栏目从原型到当前实现的演进。部署与主题基础见 [LOG-Hugo](../log-hugo/)，弃用接口迁移见 [LOG-全面更新](../log-全面更新/)，日常配置方法见 [LOG-使用手册](../log-使用手册/)。
+>本次 Hugo 的搭建与迁移所涉及的 **代码工作** 全部由 `gpt-5.6 Sol-medium` 进行
+>
+>毕竟我也看不懂 Hugo 的这些新编译语言 (
+>
+>不过全流程框架以及内容均按本人规划设计，可以放心阅读。
 
-## 栏目目标
+> WARNING: 内含大量 ai 生成内容，尽管已经经过大量人工审核修改，但本人编程水平太低难免遗留错误，请批判的阅读。
 
-摄影按期发布作品，每一期拥有独立的 Page Bundle、封面、照片资源、图注和 PhotoSwipe 灯箱。“书与影”优先展示个人 Top 10 电影，再用独立的 `2026` 索引记录当年的观影和阅读，而不是让年份成为唯一分类。
+---
+## 更新目标
 
-本轮没有启用 English，没有新增 npm、Go 或 Hugo Module 依赖，也没有改变 GitHub Actions。中文菜单、图标、模板和数据文件都保留在站点仓库中，便于继续自定义。
+本次更新为博客增加两个长期栏目：
 
-## 菜单与图标
+1. **摄影**：按期发布摄影作品，每一期拥有独立正文、封面、照片和图注，并复用 Stack 自带的 PhotoSwipe。
+2. **书与影**：优先展示“个人 Top 10 电影”等长期榜单，再记录当年的观影与阅读。
 
-中文菜单在 `config/_default/menu.zh.toml` 中维护，摄影和书与影分别指向：
+---
+
+## 菜单结构
+
+修改文件：
+
+```text
+config/_default/menu.zh.toml
+```
+
+新的中文菜单顺序为：
+
+```text
+首页
+归档
+摄影
+书与影
+搜索
+关于
+```
+
+摄影和书与影对应：
 
 ```toml
 [[main]]
     identifier = "photography"
-    name = "摄影"
-    url = "/photography/"
+    name       = "摄影"
+    url        = "/photography/"
+    weight     = 3
+    [main.params]
+        icon = "camera"
 
 [[main]]
     identifier = "books-and-film"
-    name = "书与影"
-    url = "/books-and-film/"
+    name       = "书与影"
+    url        = "/books-and-film/"
+    weight     = 4
+    [main.params]
+        icon = "book-movie"
 ```
 
-菜单图标放在本站覆盖层的 `assets/icons/`：
+新增图标：
 
-- `assets/icons/camera.svg`
-- `assets/icons/book-movie.svg`
+```text
+assets/icons/camera.svg
+assets/icons/book-movie.svg
+```
 
-需要换图标时，保持 `identifier` 不变，只替换对应 SVG 或在菜单项中修改 `icon` 名称。菜单的显示文字、顺序和 URL 仍以 `menu.zh.toml` 为准。
+菜单使用站点内部路径，由 Hugo 根据 GitHub Pages 的项目子路径生成最终 URL。
 
-## 摄影 Page Bundle
+---
 
-每一期摄影作品使用目录型 Page Bundle：
+## 摄影栏目的内容结构
+
+摄影栏目使用 Hugo Page Bundle。栏目入口是 branch bundle，每一期是 leaf bundle。以下目录树：
+
+```text
+content/
+└── photography/
+    ├── _index.zh.md
+    ├── issue-000/
+    │   └── index.md
+    └── issue-001/
+        ├── index.md
+        ├── cover.jpg
+        └── photos/
+            ├── 01.jpg
+            ├── 02.jpg
+            └── 03.jpg
+```
+
+Hugo Page Bundle 会把正文和相关图片保存在同一目录，使资源不会与其他文章混淆。官方说明：[Page Bundles](https://gohugo.io/content-management/page-bundles/)。
+
+摄影栏目入口：
+
+```text
+content/photography/_index.zh.md
+```
+
+---
+
+## 创建正式摄影期刊
+
+新增原型：
+
+```text
+archetypes/photography.md
+```
+
+创建新一期：
+
+```bash
+hugo new content photography/issue-001/index.md --kind photography
+```
+
+生成后的主要 Front Matter：
+
+```yaml
+---
+title: "摄影第 01 期"
+description: ""
+date: 2026-08-12
+issue: 1
+location: ""
+camera: ""
+lens: ""
+cover: "cover.jpg"
+comments: true
+toc: false
+license: false
+draft: true
+resources:
+    - src: "photos/*"
+      params:
+          alt: ""
+          caption: ""
+---
+```
+
+使用步骤：
+
+1. 将网页母版封面保存为 `cover.jpg`。
+2. 将本期照片放入 `photos/`。
+3. 修改标题、期数、地点和器材信息。
+4. 为照片填写 `alt` 和 `caption`。
+5. 将 `draft` 改为 `false`。
+6. 在正文加入图集短代码。
+
+图集短代码：
+
+```go-html-template
+{{</* photo-gallery */>}}
+```
+
+---
+
+## 相机照片压缩
+
+相机直接输出的 JPEG 通常仍有 8–15 MB，不应该原样批量提交到博客仓库。正确流程是：
+
+```text
+RAW / 相机原始 JPG
+        ↓ 离线保存
+网页母版 JPEG
+        ↓ 提交到 Hugo
+Hugo 生成 WebP 缩略图和灯箱图
+```
+
+### Lightroom 导出建议
+
+```text
+格式：JPEG
+色彩空间：sRGB
+质量：82
+长边：3000 px
+禁止放大：开启
+输出锐化：屏幕 / 标准
+元数据：仅版权信息
+```
+
+DPI 不影响网页显示体积，真正重要的是像素尺寸和压缩质量。
+
+>建议使用电脑自带的相片查看功能缩小jpg大小至 1Mb 以下，约定缩小到 60% 。
+
+---
+
+## 摄影图片处理代码
+
+新增短代码：
+
+```text
+layouts/shortcodes/photo-gallery.html
+```
+
+关键处理：
+
+```go-html-template
+{{ $thumbnail := $image.Fit "1200x1200 webp q82" }}
+{{ $lightbox := $image.Fit "2400x2400 webp q85" }}
+```
+
+缩略图负责文章内展示，灯箱图负责 PhotoSwipe 放大浏览。页面不会让缩略图位置直接下载相机原始文件。
+
+图集输出包含：
+
+- 图片宽高，减少页面布局跳动。
+- `loading="lazy"` 懒加载。
+- `alt` 无障碍说明。
+- `figcaption` 图注。
+- PhotoSwipe 所需的原始展示宽高。
+- 横图和竖图的弹性布局参数。
+
+Hugo 会在构建时缓存处理结果 ([Hugo 图片处理](https://gohugo.io/content-management/image-processing/))。
+
+### 短代码的三种资源模式
+
+`photo-gallery.html` 先读取两个可选参数，再按优先级选择资源：
+
+```go-html-template
+{{- $images := slice -}}
+{{- $global := .Get "global" -}}
+{{- $files := .Get "files" -}}
+
+{{- if $global -}}
+    {{- with resources.Get $global -}}
+        {{- $images = $images | append . -}}
+    {{- else -}}
+        {{- warnf "Photography demo image %q was not found" $global -}}
+    {{- end -}}
+{{- else if $files -}}
+    {{- range split $files "," -}}
+        {{- $pattern := trim . " " -}}
+        {{- $resource := $.Page.Resources.GetMatch $pattern -}}
+        {{- if not $resource -}}
+            {{- $resource = $.Page.Resources.GetMatch (printf "photos/%s" $pattern) -}}
+        {{- end -}}
+        {{- with $resource -}}
+            {{- $images = $images | append . -}}
+        {{- else -}}
+            {{- warnf "Photography image %q was not found in the current Page Bundle" $pattern -}}
+        {{- end -}}
+    {{- end -}}
+{{- else -}}
+    {{- $images = .Page.Resources.Match "photos/*" -}}
+{{- end -}}
+```
+
+三种模式的用途不同：
+
+| 写法 | 资源来源 | 使用场景 |
+| --- | --- | --- |
+| `global="img/default-cover.jpg"` | `assets/`，由 `resources.Get` 读取 | 示例期复用全局默认图 |
+| 不传参数 | 当前 Page Bundle 的 `photos/*` | 一次渲染本期所有照片 |
+| `files="photos/01.jpg,photos/02.jpg"` | 当前 Page Bundle，按给定顺序逐个匹配 | 分组、控制顺序、在组间插入正文 |
+
+对应的文章写法示例：
+
+```go-html-template
+{{</* photo-gallery global="img/default-cover.jpg" */>}}
+{{</* photo-gallery */>}}
+{{</* photo-gallery files="photos/01.jpg,photos/02.jpg" */>}}
+```
+
+`global` 不是“从任意磁盘路径取图”。`resources.Get` 只能读取 Hugo asset pipeline 中的资源，路径相对于 `assets/`，不能写 `~`、Windows 绝对路径或文章目录路径。文章自己的照片则必须使用 `.Page.Resources.GetMatch` 或 `.Page.Resources.Match`，并放在与 `index.md` 同一个 Page Bundle 下。
+
+### 资源元数据、图片处理和 PhotoSwipe 调用链
+
+Page Bundle front matter 中的 `resources` 为每张图提供元数据：
+
+```yaml
+resources:
+    - src: "photos/DSC_9792.jpg"
+      params:
+          alt: "山与别墅"
+          caption: "双层彩虹落在山下别墅的上方"
+```
+
+短代码读取 `.Params.alt` 和 `.Params.caption`，也允许短代码参数覆盖。每张图片再生成两份 WebP：
+
+```go-html-template
+{{- $thumbnail := $image.Fit "1200x1200 webp q82" -}}
+{{- $lightbox := $image.Fit "2400x2400 webp q85" -}}
+```
+
+输出的 `<a>` 保存灯箱图地址和 `data-pswp-width`、`data-pswp-height`；Stack 的 PhotoSwipe partial 扫描 `.image-link` 后建立灯箱。完整数据流是：
+
+```text
+Page Bundle 原图
+  -> .Page.Resources
+  -> photo-gallery shortcode
+  -> Hugo Fit 生成缩略图和灯箱 WebP
+  -> figure / image-link / data-pswp-*
+  -> Stack PhotoSwipe 初始化
+```
+
+因此“四张照片并排”不是 Markdown 自动规定的，而是同一次短代码调用输出四个 `.photography-gallery-item`，再由图集 flex 样式把它们排在同一组中。需要分组时应调用两次短代码，中间直接写 Markdown：
+
+```markdown
+第一组照片之前的说明。
+
+{{</* photo-gallery files="photos/01.jpg,photos/02.jpg" */>}}
+
+这里是一段普通 Markdown 正文，用来说明拍摄位置或光线变化。
+
+{{</* photo-gallery files="photos/03.jpg,photos/04.jpg" */>}}
+```
+
+### “雨后彩虹”实际修正
+
+正式文章采用以下结构：
 
 ```text
 content/photography/2026-07-22-彩虹/
@@ -59,179 +333,464 @@ content/photography/2026-07-22-彩虹/
     └── DSC_9835.jpg
 ```
 
-当前实际文章是“雨后彩虹”，封面和资源写在 `content/photography/2026-07-22-彩虹/index.md`：
-
-```yaml
----
-title: "20260722：雨后彩虹"
-issue: 1
-demoImage: "photos/DSC_9792.jpg"
-cardAspect: "landscape"
-resources:
-    - src: "photos/DSC_9792.jpg"
-      params:
-          alt: "山与别墅"
-          caption: "双层彩虹落在山下别墅的上方"
----
-```
-
-`demoImage` 是摄影列表卡片的封面，不会替代正文照片；正式照片放在同一 Page Bundle 的 `photos/` 目录。创建下一期可以复制这个结构，或使用：
-
-```bash
-hugo new content photography/issue-001/index.md --kind photography
-```
-
-`archetypes/photography.md` 提供 `issue`、`demoImage`、`location`、`resources` 等字段的初始模板。新文章创建后，应将真实照片复制到该文章自己的 `photos/` 目录，再修改 front matter。
-
-## 摄影列表与卡片
-
-摄影列表由 `layouts/photography/list.html` 渲染，详情页由摄影单页模板和根目录覆盖层共同完成。列表不使用经典 Stack 的右侧归档栏，页面保持单栏或双栏主体；卡片网格在不同宽度下自适应：
-
-- 宽屏：三列。
-- 中等宽度：两列。
-- 窄屏：一列。
-
-卡片比例通过 front matter 的 `cardAspect` 调整：
-
-```yaml
-cardAspect: "landscape"
-```
-
-可选值及其处理规格：
-
-| 值 | 视觉比例 | 用途 |
-| --- | --- | --- |
-| `landscape` | 3:2 | 默认横幅照片 |
-| `wide` | 16:9 | 风景或电影感画面 |
-| `square` | 1:1 | 方形构图 |
-| `portrait` | 2:3 | 人像或竖幅作品 |
-
-非法值会回退到 `landscape`。列表会优先从当前 Page Bundle 找 `demoImage`，找不到时才尝试全局资源；正式文章的本地资源不会被误当作全局资源。
-
-## 图片大小与资源流程
-
-相机原片可以保留在本地归档，但不建议直接作为网页下载资源。推荐分成三层：
-
-| 层级 | 目的 | 建议 |
-| --- | --- | --- |
-| 相机原片 | 长期保存和重新处理 | 外部硬盘或照片管理软件，不必全部提交仓库 |
-| 网页母版 | Hugo 输入 | 长边约 2400–3600px，JPEG 质量约 82–88 |
-| Hugo 衍生图 | 页面显示和灯箱 | 模板自动生成 WebP 缩略图与较大灯箱图 |
-
-Lightroom 可以在导出时限制长边和质量；ImageMagick 的示例为：
-
-```bash
-magick DSC_7795.jpg -resize "3600x3600>" -strip -interlace Plane -quality 85 DSC_7795-web.jpg
-```
-
-提交前先看文件大小和实际显示尺寸。摄影 Page Bundle 的 JPG 仍可保留为源资源，但模板会通过 `.Fit` 生成 WebP，减少浏览器传输量。默认演示封面和正式摄影资源是两件事：`static/img/default-cover.jpg` 或 `assets/img/default-cover.jpg` 用于没有封面的普通文章，`photos/` 内的照片只属于当前摄影期刊。
-
-## `photo-gallery` 短代码
-
-`layouts/shortcodes/photo-gallery.html` 支持三种来源。
-
-### 当前页面的全部照片
-
-不传参数时，短代码读取当前 Page Bundle 的 `photos/*`：
+最初无法渲染的根因是文章本地图片与全局 asset resource 混用。修正后，`demoImage: "photos/DSC_9792.jpg"` 只负责本期列表封面，正文使用两次 `files` 模式：
 
 ```markdown
-{{</* photo-gallery */>}}
-```
+暴雨刚刚停下时，天空出现了第一道彩虹……
 
-### 全局演示资源
-
-`global` 只适合主题演示图或站点级资源，资源由 `resources.Get` 查找：
-
-```markdown
-{{</* photo-gallery global="img/default-cover.jpg" */>}}
-```
-
-不要把文章自己的 `photos/` 路径误传给 `global`。文章本地照片应该使用 `files` 或默认的全部资源模式。
-
-### 指定文件与分组
-
-`files` 接受逗号分隔的文件名，短代码会先在当前 Page Bundle 中查找，也兼容省略 `photos/` 前缀：
-
-```markdown
 {{</* photo-gallery files="photos/DSC_9792.jpg,photos/DSC_9800.jpg" */>}}
+
+随着太阳西沉，彩虹逐渐与城市和桥梁重叠……
+
+{{</* photo-gallery files="photos/DSC_9806.jpg,photos/DSC_9835.jpg" */>}}
 ```
 
-如果需要两组照片，中间插入一段文字，直接写两个短代码：
+示例期 `issue-000` 存在于历史提交 `897a646`，当前工作区已经删除。`global` 模式仍受短代码支持，但当前只在 LOG 的转义示例中展示；当前 `assets/img/default-cover.jpg` 为 890,351 bytes。正式摄影期继续使用 Page Bundle 路径。
 
-```markdown
-暴雨刚刚停下时，天空出现了第一道彩虹。
+---
 
-{{</* photo-gallery files="photos/01.jpg,photos/02.jpg" */>}}
+## 摄影模板与样式
 
-随着太阳西沉，彩虹逐渐与城市和桥梁重叠。
-
-{{</* photo-gallery files="photos/03.jpg,photos/04.jpg" */>}}
-```
-
-这里的 `{{</* ... */>}}` 是日志中的转义展示形式；实际文章中应写成普通 Hugo 短代码（尖括号形式）。日志必须转义，否则构建日志文章时会提前执行示例短代码。
-
-### 图注和替代文本
-
-Page Bundle 的 `resources` 元数据提供每张照片的 `alt` 和 `caption`：
-
-```yaml
-resources:
-    - src: "photos/01.jpg"
-      params:
-          alt: "雨后的山谷"
-          caption: "彩虹从山谷上方延伸到城市边缘"
-```
-
-短代码读取这些参数，并将 `alt` 写入图片、将 `caption` 写入 `figcaption`。短代码参数 `alt` 或 `caption` 可以在特殊场景覆盖资源元数据。
-
-### 资源查找的区别
+新增模板：
 
 ```text
-resources.Get                 全局资源：assets/ 或站点资源管道
-.Page.Resources.GetMatch      当前页面 Page Bundle 的资源
-.Page.Resources.Match         当前页面匹配的一组资源
+layouts/photography/list.html
+layouts/photography/single.html
 ```
 
-Page Bundle 图片必须位于 `index.md` 同级或其子目录。Windows 用户不要在资源路径中使用 `~`；Hugo 不会把它展开成用户目录，结果会是资源找不到。使用项目相对路径或 Page Bundle 相对路径。
+列表页按照：
 
-模板会为每张图生成 WebP 缩略图和灯箱图，并把宽高写进 HTML；PhotoSwipe 根据灯箱尺寸打开原图衍生版本。当前“雨后彩虹”已经修正为两个两图画廊，中间保留 Markdown 段落，而不是把四张照片挤成一个不可控的长行。
+```text
+issue 降序 → date 降序
+```
 
-## 书与影页面
+显示每一期的：
 
-页面文件和模板分别是：
+- 期数
+- 封面
+- 标题
+- 日期
+- 简介
+- 地点
+- 照片数量
+
+新增样式：
+
+```text
+assets/scss/partials/custom-components/_photography.scss
+```
+
+并在 `assets/scss/custom.scss` 中导入。
+
+---
+
+## 书与影栏目
+
+栏目入口：
 
 ```text
 content/books-and-film/index.zh.md
-layouts/page/books-and-film.html
 ```
 
-数据位于：
+页面地址：
+
+```text
+/books-and-film/
+```
+
+页面通过并列索引切换长期榜单和年度记录：
+
+```text
+[ Top 10 ] [ 2026 ]
+```
+
+默认显示 Top 10；点击 2026 后只显示年度记录。分类状态会写入 `#top10` 或 `#2026`，刷新页面后仍能恢复当前分类。切换代码直接保存在页面模板中，不加载第三方 JavaScript。
+
+---
+
+## 书与影数据
+
+数据文件：
 
 ```text
 data/books-and-film/top10-movies.toml
 data/books-and-film/2026.toml
 ```
 
-页面顶部提供两个并列索引：`Top 10` 和 `2026`。Top 10 展示长期个人榜单，`2026` 展示当年的电影和书籍。当前示例包含《星际穿越》和《蜘蛛侠：崭新之日》，每项数据包括片名、年份、导演、个人评分、海报路径和来源链接。
+个人 Top 10 电影条目格式：
 
-Top 10 海报网格在宽屏显示五列，中等宽度三列，窄屏两列；更窄的设备由 CSS 再收缩为适合阅读的布局。海报可以放在 `assets/img/` 并由 `resources.Get` 处理为 WebP，也可以使用可靠的外部来源链接；外部来源要保留 `target="_blank"` 和 `rel="noopener noreferrer"`。
+```toml
+[[items]]
+    rank           = 1
+    title          = "星际穿越"
+    originalTitle  = "Interstellar"
+    year           = 2014
+    director       = "Christopher Nolan"
+    duration       = "168 分钟"
+    cover          = "img/books-and-film/movies/interstellar.jpg"
+    url            = "https://www.paramountpictures.com/movies/interstellar"
+    personalRating = 10.0
+    note            = "关于时间、选择与归途的科幻旅程。"
+```
 
-添加电影时，复制 `top10-movies.toml` 中的一个项目，修改 `rank`、`title`、`cover` 和说明字段。添加年度记录时编辑 `2026.toml`，不要把年度项目混入 Top 10 数据。
+海报保存为：
 
-## `data/` 目录的用途
+```text
+assets/img/books-and-film/movies/interstellar.jpg
+```
 
-根目录 `data/` 不是构建垃圾，也不是必须手动生成的缓存。Hugo 会把其中的 YAML、TOML、JSON 等文件加载为结构化数据，模板可通过 `hugo.Data` 读取。本项目使用它保存“书与影”的榜单和年度记录，让内容数据与页面布局分离：
+详情信息和海报来自派拉蒙官方页面：
 
-- `content/`：需要生成文章或页面的正文。
-- `data/`：供模板读取的结构化记录，不单独生成页面。
-- `layouts/`：页面结构和渲染逻辑。
+- [影片详情](https://www.paramountpictures.com/movies/interstellar)
+- [官方海报资源](https://public-website-assets.paramountpictures.com/paramount2025/s3fs-public/styles/poster_medium/public/intersteller_en_dvd_800x1200.jpg?itok=YxrRaJN2)
 
-因此新增电影主要修改 `data/books-and-film/`，新增摄影文章则修改 `content/photography/`。
+页面使用本地海报副本，避免长期热链第三方服务器。海报仅作为影片记录封面，页面同时保留来源链接。
 
-## 实际修正与验证
+### 添加新的 Top 10 电影
 
-本栏目开发过程中修正了“雨后彩虹” Page Bundle 的资源路径、封面查找和照片计数，并加入 `files` 分组渲染。当前工作区中的摄影文章目录和栏目改动仍按 Git 状态保留；日志只记录能够从当前对话明确追溯的实现，不把未归因的其他修改伪装成已完成历史。
+1. 将海报保存到 `assets/img/books-and-film/movies/`。
+2. 在 `top10-movies.toml` 中增加一个 `[[items]]`。
+3. 填写唯一的 `rank`。
+4. 填写标题、年份、导演、链接和个人短评。
+5. 执行严格构建。
 
-最近一次严格构建结果为：退出码 `0`，生成 41 个页面、4 个非页面文件、18 个处理后图片和 14 个别名；弃用警告和短代码警告均为 `0`。浏览器检查确认摄影页可以加载两组画廊，四张照片均有 WebP 资源，PhotoSwipe 可以打开，桌面和窄屏没有横向溢出。
+### 添加 2026 记录
 
-章节标题使用语义化标题，不手工添加“一、二、三”等编号；主题自带目录负责章节编号。操作顺序仍可使用有序列表。
+电影：
+
+```toml
+[[movies]]
+    title          = "电影名称"
+    watchedDate    = "2026-08-12"
+    cover          = "img/books-and-film/movies/example.jpg"
+    personalRating = 8.5
+    note            = "个人短评。"
+    url             = "https://example.com/"
+```
+
+书籍：
+
+```toml
+[[books]]
+    title          = "书名"
+    author         = "作者"
+    readDate       = "2026-08-12"
+    cover          = "img/books-and-film/books/example.jpg"
+    personalRating = 9.0
+    note            = "阅读短评。"
+    url             = "https://example.com/"
+```
+
+当前 2026 数据为空，因此页面显示明确的空状态。
+
+---
+
+## 书与影模板与样式
+
+新增模板：
+
+```text
+layouts/page/books-and-film.html
+```
+
+Front Matter 通过：
+
+```yaml
+layout: "books-and-film"
+```
+
+选择该模板，不影响其他普通页面。
+
+页面包含：
+
+- 排名徽章
+- 本地响应式 WebP 海报
+- 中文名与原名
+- 年份、导演、片长
+- 个人评分
+- 个人短评
+- 官方详情链接
+- 海报来源链接
+- 2026 空状态
+- Waline 评论
+
+新增样式：
+
+```text
+assets/scss/partials/custom-components/_books-and-film.scss
+```
+
+海报采用紧凑的竖向卡片：宽屏五列、中等屏幕三列、窄屏两列。移动端隐藏较长短评，并缩小元数据字号，保证两列海报仍可阅读。
+
+---
+
+## 构建与发布
+
+发布前严格检查：
+
+```bash
+hugo --gc --minify --panicOnWarning
+```
+
+确认无误后：
+
+```bash
+hdeploy "新增摄影与书与影栏目"
+```
+
+或使用标准 Git 命令：
+
+```bash
+git add -A
+git commit -m "Add photography and books-and-film sections"
+git push
+```
+
+本次执行阶段没有提交、推送或部署。
+
+---
+
+## 验证结果
+
+本次执行完成了严格构建、生成文件检查和真实浏览器检查：
+
+- 使用 Hugo 0.164.0 Extended 执行 `hugo --gc --minify --panicOnWarning`，退出码为 0，警告数为 0。
+- 共生成 43 个页面、15 个别名页面，并处理 11 张图片。
+- 摄影列表页、摄影第 00 期和书与影页均成功生成。
+- 摄影列表封面宽度为 720 像素，正文预览图宽度为 1200 像素；二者均为 Hugo 从默认图片生成的 WebP，而不是直接输出原始大图。
+- 《星际穿越》本地海报被处理为宽度 600 像素的 WebP，生成文件约 126 KB。
+- 在 1440 × 1000 桌面视口和 390 × 844 手机视口中检查三个页面，均返回 HTTP 200，图片均完整加载，且没有横向溢出。
+- 摄影详情页的 PhotoSwipe 灯箱可正常打开。
+- 书与影页按预期先显示“个人 Top 10 电影”，并在下方显示 2026 年空状态。
+- 浏览器检查未发现本站资源请求失败。
+- `git diff --check` 通过，且本次没有修改 `public/` 或 `resources/`。
+- 本次没有执行 Git 提交、推送或 GitHub Pages 部署。
+
+> 相机原片用于保存作品，网页母版用于发布作品，响应式衍生图用于向访客展示作品。三者不应混为同一个文件。
+
+---
+
+## 书与影索引与海报网格调整
+
+### 调整原因
+
+最初的榜单网格固定为单列：
+
+```scss
+.ranking-grid {
+    grid-template-columns: 1fr;
+}
+```
+
+每个条目又使用横向“海报 + 详情”布局，因此只有《星际穿越》一个条目时，卡片会占满整个内容宽度，看起来更像文章头图而不是影片海报。
+
+### 分类索引
+
+修改文件：
+
+```text
+layouts/page/books-and-film.html
+```
+
+新增两个并列标签：
+
+```html
+<nav class="books-and-film-tabs" role="tablist" aria-label="书与影分类">
+    <button type="button" role="tab" data-books-tab="top10">Top 10</button>
+    <button type="button" role="tab" data-books-tab="2026">2026</button>
+</nav>
+```
+
+脚本会同步以下状态：
+
+- `aria-selected`：供辅助技术识别当前标签。
+- `tabindex`：只让当前标签进入正常键盘顺序。
+- `hidden`：隐藏未选择的内容面板。
+- URL hash：记录 `#top10` 或 `#2026`。
+- 左右方向键：在两个标签之间切换。
+
+脚本没有第三方依赖，也不会访问外部服务。
+
+### 五列海报网格
+
+修改样式：
+
+```text
+assets/scss/partials/custom-components/_books-and-film.scss
+```
+
+响应式列数：
+
+```scss
+.media-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+    .media-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1200px) {
+    .media-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+```
+
+海报区域统一使用：
+
+```scss
+aspect-ratio: 2 / 3;
+object-fit: cover;
+```
+
+Hugo 为每张源海报生成：
+
+```go-html-template
+{{ $preview := .Fill "520x780 webp q82" }}
+```
+
+页面实际加载本地 WebP，而不是直接加载外部海报。
+
+### 《蜘蛛侠：崭新之日》演示条目
+
+修改数据：
+
+```text
+data/books-and-film/top10-movies.toml
+```
+
+新增本地海报：
+
+```text
+assets/img/books-and-film/movies/spider-man-brand-new-day.jpg
+```
+
+条目使用 Sony 官方影片页提供的资料，导演为 Destin Daniel Cretton，年份为 2026。由于本站尚未形成实际观影评价，条目明确填写：
+
+```toml
+status = "待上映 / 评分待定"
+note   = "用于展示榜单海报网格的待上映示例，名次并非最终评价。"
+```
+
+来源：
+
+- [Sony 官方影片页](https://www.sonypictures.com/movies/spidermanbrandnewday)
+- [Sony 官方海报](https://www.sonypictures.com/sites/default/files/styles/max_860x460/public/title-key-art/spidermanbrandnewday_onesheet_1400x2100.jpg?itok=Nh6VAAh-)
+
+下载后的 JPEG 为 69,023 字节，SHA-256：
+
+```text
+AC7C3710284AFEED0424F3795151184F7CA756115D0722BB5E591D12692C9E59
+```
+
+---
+
+## 摄影页布局与卡片比例
+
+### 取消右侧栏
+
+摄影列表和详情模板原先都定义了 `right-sidebar`。本次从以下文件删除该定义：
+
+```text
+layouts/photography/list.html
+layouts/photography/single.html
+```
+
+摄影列表现在使用完整主内容宽度；详情页保持单栏文章和 PhotoSwipe 图集。
+
+### 与书与影统一外壳
+
+摄影标题和期刊网格现在共同放入：
+
+```html
+<article class="photography-shell card">
+```
+
+标题区使用底部分隔线，期刊卡片采用统一边框、圆角、阴影、内边距和等高内容区域。
+
+响应式列数：
+
+```text
+小于 768 px：1 列
+768–1199 px：2 列
+1200 px 及以上：3 列
+```
+
+### 自定义摄影卡片形状
+
+配置位置：
+
+```text
+content/photography/_index.zh.md
+```
+
+默认配置：
+
+```yaml
+cardAspect: "landscape"
+```
+
+可用值：
+
+```text
+landscape  3:2
+wide       16:9
+square     1:1
+portrait   2:3
+```
+
+模板会根据设置选择匹配的 Hugo 图片处理尺寸：
+
+```go-html-template
+landscape → 720x480 WebP
+wide      → 720x405 WebP
+square    → 720x720 WebP
+portrait  → 600x900 WebP
+```
+
+如果填写了不支持的值，模板会回退到 `landscape`。比例在栏目级统一设置，避免同一行的卡片高低不齐。
+
+---
+
+## 本轮验证
+
+本轮使用 Hugo 0.164.0 Extended 严格构建，并使用本机 Chrome 分别在 1440 × 1000 和 390 × 844 视口进行真实页面检查。
+
+以下构建结果是该次栏目工程完成时的历史验证快照，不代表当前站点统计：
+
+```text
+Pages:             43
+Processed images:  12
+Aliases:           15
+Exit code:          0
+Warnings:           0
+```
+
+书与影检查：
+
+- 宽屏为五列网格，窄屏为两列网格。
+- Top 10 当前包含两张紧凑海报卡片。
+- 两张海报均由 Hugo 生成宽度 520 像素的本地 WebP。
+- Top 10 与 2026 可以点击切换。
+- 2026 面板可以显示空状态。
+- `#2026` 刷新后仍会恢复 2026 面板。
+- `aria-selected` 与隐藏面板状态同步。
+
+摄影检查：
+
+- 宽屏为三列，中等屏幕规则为两列，窄屏为一列。
+- 默认 `landscape` 卡片的浏览器实测宽高比为 1.50，即 3:2。
+- 列表页和详情页均没有可见右侧栏。
+- 列表封面由 Hugo 生成本地 WebP。
+- 详情图完整加载，PhotoSwipe 灯箱能够打开。
+
+通用检查：
+
+- 三个被检查页面在两种视口下均返回 HTTP 200。
+- 没有横向溢出。
+- 没有本站资源请求失败。
+- 没有安装新的浏览器、JavaScript 包或其他依赖。
+- 本轮没有修改 `public/`、`resources/`、GitHub Actions 或远程仓库状态。

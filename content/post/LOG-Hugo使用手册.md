@@ -13,9 +13,11 @@ tags:
 comments: true
 math: false
 draft: false
+aliases:
+    - /post/log-使用手册/
 ---
 
-这是一份日常维护手册，帮助你在不重新阅读迁移历史的情况下修改站点。部署和主题演进见 [LOG-Hugo](../log-hugo/)，弃用接口迁移见 [LOG-全面更新](../log-全面更新/)，摄影与书与影的实现记录见 [LOG-栏目扩展](../log-栏目扩展/)。
+这是一份日常维护手册，帮助你在不重新阅读迁移历史的情况下修改站点。部署和主题演进见 [LOG-Hugo](../log-hugo/)，弃用接口迁移见 [LOG-Hugo 全面更新](../log-hugo全面更新/)，摄影与书与影的实现记录见 [LOG-Hugo 栏目扩展](../log-hugo栏目扩展/)。
 
 ## 项目目录
 
@@ -39,6 +41,32 @@ draft: false
 - 修改文章内容：编辑 `content/`。
 
 同路径的根目录模板优先于 `themes/stack/`。如果根目录已经存在覆盖文件，优先修改覆盖文件；只有当本站没有覆盖时才修改主题源码。
+
+### 配置合并与覆盖优先级
+
+本站使用配置目录而不是单个 `hugo.toml`。Hugo 会合并 `config/_default/` 下的配置文件；文件名只是为了分工，最终都会进入同一个 Site configuration：
+
+```text
+config/_default/config.toml       站点、URL、输出和 taxonomy
+config/_default/languages.toml    语言定义和启停
+config/_default/params.toml       所有语言共享的主题结构参数
+config/_default/params.zh.toml    中文文字和中文专属参数
+config/_default/menu.zh.toml      中文菜单
+config/_default/markup.toml       Goldmark 和代码高亮
+```
+
+模板读取 `.Site.Params.footer.enabled` 时，Hugo 已经把全局 `params.toml` 与当前语言参数合并。结构开关放在全局文件，中文句子放在 `params.zh.toml`，这样以后恢复 English 时不会把中文文字误用到英文站点。
+
+配置并不是唯一的优先级。模板选择从具体到通用大致为：
+
+```text
+根目录的具体模板
+  -> 根目录的通用模板
+  -> themes/stack 中的具体模板
+  -> themes/stack 中的通用模板
+```
+
+例如摄影列表优先选择 `layouts/photography/list.html`，不会进入 `layouts/list.html`；普通 section 才会使用根目录 `layouts/list.html`。排查“修改没有生效”时，先找实际模板入口，而不是继续叠加 CSS。
 
 ## 站点和语言配置
 
@@ -195,9 +223,9 @@ Footer 的显示开关和结构在 `config/_default/params.toml`：
 ```toml
 copyrightText     = "© {year} {title}"
 runtimeIcon       = "🚀"
-runtimeText       = "已运行 {days} 天 {hours} 小时 {minutes} 分钟"
-customText        = "个性化标签"
-poweredByText     = "使用 Hugo 构建 | 主题 Stack"
+runtimeText       = "已运行 {days} 天 {hours} 时 {minutes} 分"
+customText        = " "
+poweredByText     = "主题 <b><a href=\"https://github.com/CaiJimmy/hugo-theme-stack\" target=\"_blank\" rel=\"noopener\">Stack</a></b>由 <a href=\"https://jimmycai.com\" target=\"_blank\" rel=\"noopener\">Jimmy</a> 设计"
 privacyText       = "隐私政策"
 ```
 
@@ -209,6 +237,35 @@ privacyText       = "隐私政策"
 - `{days}`、`{hours}`、`{minutes}`：根据 `launchDate` 计算的运行时间。
 
 Footer 的整个布局覆盖在 `layouts/_partials/footer/footer.html`，而不是只改某一行文字。需要调整版权、运行时间、自定义文字、Powered by、隐私政策的顺序或包裹元素时，修改该文件；需要调整中文默认文字时，修改 `params.zh.toml`。外部隐私政策可以直接填完整 URL，相对页面则使用 `privacy/`。
+
+模板调用链为：
+
+```text
+themes/stack/layouts/baseof.html
+  -> partialCached "footer/footer.html"
+  -> layouts/_partials/footer/footer.html（根目录覆盖）
+  -> config/_default/params.toml + params.zh.toml
+```
+
+根模板使用 `partialCached` 不代表修改后必须手工清除缓存；`hugo server` 会在模板或配置变化后重新构建。若本地浏览器仍显示旧内容，先确认终端已经完成 rebuild，再强制刷新浏览器。
+
+整个区域的开关逻辑应保持在模板中，例如：
+
+```go-html-template
+{{- with .Site.Params.footer -}}
+    {{- if .enabled -}}
+        {{- if .showCopyright }}...{{ end -}}
+        {{- if .showRuntime }}...{{ end -}}
+        {{- if .showCustomText }}...{{ end -}}
+        {{- if .showPoweredBy -}}
+            ...
+            {{- if and .showPrivacyLink .privacyText }}...{{ end -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+```
+
+关闭方法：将单项 `show...` 改为 `false` 会隐藏对应内容，但 `showPrivacyLink` 位于 `showPoweredBy` 的外层条件之内；`showPoweredBy = false` 会同时隐藏主题署名和隐私链接。将 `enabled = false` 会关闭整个自定义 Footer。排列顺序由模板中的块顺序决定，文字由语言参数决定。常见错误是直接删模板中的 HTML，导致以后无法仅靠配置恢复；另一个错误是把站内 `privacyLink` 写成 `/privacy/`，在 GitHub Pages 项目站点中可能指向账户根目录，应写 `privacy/` 并让 `relLangURL` 补全子路径。
 
 ## 文章尾部信息框
 
@@ -225,7 +282,7 @@ Footer 的整个布局覆盖在 `layouts/_partials/footer/footer.html`，而不�
 
 ```toml
 [article.footerBox]
-    personalLabel = "个性化标签"
+    personalLabel = "感谢阅读"
 ```
 
 同一组件还会显示文章标签和许可信息。许可配置位于：
@@ -238,6 +295,39 @@ Footer 的整个布局覆盖在 `layouts/_partials/footer/footer.html`，而不�
 
 文章 front matter 可以用 `license: false` 关闭单篇许可，也可以用 `tags` 设置该文章的标签。需要改变整个信息框的颜色、内边距或布局时，编辑 `assets/scss/custom.scss`；不要在每篇文章里复制一套 HTML。
 
+实际调用链为：
+
+```text
+single.html
+  -> article/article.html
+  -> article/components/footer.html（根目录覆盖）
+       -> article/components/tags.html
+       -> helper/icon.html
+  -> assets/scss/partials/custom-components/_article-footer.scss
+```
+
+组件只在普通 `post` 文章且全局 `footerBox.enabled` 为真时建立外框。许可显示使用当前模板中的真实条件：
+
+```go-html-template
+{{ if and (.Site.Params.article.license.enabled) (not (eq .Params.license false)) }}
+```
+
+因此：
+
+- 全局启用、文章未写 `license`：显示默认许可；
+- 全局启用、文章写 `license: false`：仅该篇隐藏；
+- 全局关闭、文章未写 `license`：隐藏许可；
+- 全局关闭、文章写 `license: true`：仍然隐藏许可；
+- `showPersonalLabel = false` 只隐藏个性化标签，不影响 tags 和 license。
+
+样式文件通过 `assets/scss/custom.scss` 导入：
+
+```scss
+@import "partials/custom-components/article-footer";
+```
+
+需要改暗色、窄屏或 tag pill 时修改该 partial；不要同时在 `custom.scss` 和 partial 中定义同一选择器。
+
 ## 菜单、图标和样式
 
 中文菜单在 `config/_default/menu.zh.toml`，英文菜单在 `config/_default/menu.en.toml`。添加菜单项时至少设置唯一的 `identifier`、显示文字和 URL。图标通常放在 `assets/icons/`，例如：
@@ -248,10 +338,25 @@ Footer 的整个布局覆盖在 `layouts/_partials/footer/footer.html`，而不�
     name = "摄影"
     url = "/photography/"
     weight = 4
-    icon = "camera"
+    [main.params]
+        icon = "camera"
 ```
 
 颜色、卡片比例、Footer 框和响应式断点优先写在 `assets/scss/custom.scss`。主题升级或本地主题替换时，根目录覆盖层会继续优先使用，但仍应记录自定义选择，避免误删。
+
+菜单图标的加载链为：
+
+```text
+menu.zh.toml 中 [main.params] icon = "camera"
+  -> .Site.Menus.main
+  -> .Params.Icon
+  -> partial "helper/icon"
+  -> assets/icons/camera.svg
+```
+
+`identifier` 必须唯一，`weight` 越小越靠前。本站是 GitHub Pages 项目站点，站内菜单优先写 `url = "photography/"` 这类相对地址；若模板会调用 `relLangURL`，它会自动补上 `/LKWL.github.io/`。添加图标时保持 SVG 使用 `currentColor`，这样浅色和暗色模式可继承菜单文字颜色。
+
+恢复或删除菜单项时，同时检查 TOML 条目和对应页面。只删菜单不会删除内容，只删内容会留下指向 404 的菜单。SCSS 的新增模块集中由 `assets/scss/custom.scss` 导入；Hugo Extended 才能编译主题 Sass，普通 Hugo 构建会失败。
 
 ## 页面和左右侧栏宽度
 
@@ -367,7 +472,41 @@ Stack 的基础栅格位于 `themes/stack/assets/scss/grid.scss`，但日常调�
 
 默认文件应位于主题资源或本站资源能找到的位置。文章自身有 `image`、`images` 或 Page Bundle 资源时，会优先使用文章图片；没有图片才使用默认封面。对应的查找逻辑在 `layouts/_partials/helper/card-image.html`。
 
-经典 Stack 首页和右侧归档、分类、标签栏由 `config/_default/params.toml` 的 `[homepage]` 和 `[widgets]` 控制：
+### 默认封面的调用链
+
+根目录 `layouts/list.html` 把主题原来的：
+
+```go-html-template
+{{ partial "helper/image" (dict "Context" . "Type" "articleList") }}
+```
+
+改为：
+
+```go-html-template
+{{ partial "helper/card-image" (dict "Context" . "Type" "articleList") }}
+```
+
+`card-image.html` 先尝试文章自己的 feature image；没有时才从 `[cardImage].default` 取得全局资源。关闭 `cardImage.enabled` 会恢复“没有文章图片就不显示封面”的行为。若默认图加载失败，依次检查配置路径、文件是否位于 `assets/` 或主题可见资源目录、以及生成 HTML 是否包含项目站点子路径。图片体积大只会影响速度，不会令一个正确路径自动变成 404。
+
+### 首页双列网格、Stack 右侧栏与普通列表
+
+这三件事由不同代码控制，不能把 `homepage.grid` 当成“右侧栏开关”。starter 的 `layouts/home.html` 原本已经包含两部分：
+
+```go-html-template
+{{ define "main" }}
+    <section class="article-list {{ if .Site.Params.homepage.grid }}-grid{{ end }}">
+        ...
+    </section>
+{{ end }}
+
+{{ define "right-sidebar" }}
+    {{ partial "sidebar/right.html" (dict "Context" . "Scope" "homepage") }}
+{{ end }}
+```
+
+当 `grid = true` 时，`_homepage-grid.scss` 只把中栏 `.article-list.-grid` 中的文章卡片排成两列。`right-sidebar` 插槽始终存在，但 starter 默认把 `widgets.homepage` 注释掉，所以 `sidebar/right.html` 没有组件可输出，看起来就只有左栏加中间双列卡片。
+
+本站要恢复的是“原生 Stack 单列文章流 + 有内容的右侧栏”，因此必须同时做两项配置：
 
 ```toml
 [homepage]
@@ -379,10 +518,27 @@ Stack 的基础栅格位于 `themes/stack/assets/scss/grid.scss`，但日常调�
         { type = "archives", params = { limit = 5 } },
         { type = "categories", params = { limit = 10 } },
         { type = "tag-cloud", params = { limit = 10 } },
-    ]
+]
 ```
 
-`grid = false` 表示恢复经典单列文章流；首页右侧栏由 `widgets.homepage` 提供。摄影页和书与影页使用自己的模板，不会自动套用首页右侧栏。
+完整调用链为：
+
+```text
+layouts/home.html
+  -> define "right-sidebar"
+  -> themes/stack/layouts/_partials/sidebar/right.html
+  -> Scope = "homepage"
+  -> Site.Params.widgets.homepage
+  -> search / archives / categories / tag-cloud widgets
+```
+
+当前根目录不存在 `layouts/_partials/sidebar/right.html` 覆盖文件，因此实际使用上述主题 partial。
+
+`themes/stack/layouts/baseof.html` 负责接收 `right-sidebar` block；检测到 widget 配置后使用 `.container.extended`，为三栏留出宽度。关闭右侧栏时，注释或清空 `widgets.homepage`；恢复中栏双列卡片时，把 `grid` 改回 `true`。两者可以独立组合。
+
+`layouts/list.html` 不控制首页，它覆盖普通 section、taxonomy 和 term 列表。本站在其中的主要改动是把 `helper/image` 换成 `helper/card-image` 以支持默认封面；它仍保留 Stack 的 `right-sidebar` 定义。摄影页使用更具体的 `layouts/photography/list.html`，书与影使用 `layouts/page/books-and-film.html`，所以不会进入通用列表模板，也不会自动继承普通列表右栏。
+
+常见错误是只设置 `grid = false` 后期待归档组件出现；这只能关闭双列文章卡片，不能凭空创建 widgets。反过来只启用 widgets 而保留 `grid = true`，会得到“中栏双列卡片 + 右侧栏”的更拥挤布局。
 
 ## 创建普通文章
 
@@ -523,8 +679,8 @@ Top 10 数据示例：
 rank = 1
 title = "星际穿越"
 year = 2014
-cover = "img/books-and-film/interstellar.jpg"
-url = "https://www.imdb.com/title/tt0816692/"
+cover = "img/books-and-film/movies/interstellar.jpg"
+url = "https://www.paramountpictures.com/movies/interstellar"
 personalRating = 10.0
 director = "Christopher Nolan"
 ```

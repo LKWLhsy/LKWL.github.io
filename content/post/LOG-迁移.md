@@ -20,6 +20,31 @@ draft: false
 
 Hexo 中没有字面意义上的 `LOG.md`；文件 `source/_posts/2025-03-16-record.md` 的标题为 `LOG`，本次按约定迁移为 `LOG-Hexo`，并将 Hugo 标题设置为 `LOG-Hexo`。
 
+### Hexo 只读审计清单
+
+迁移前先枚举 `source/_posts/`、`source/_drafts/` 和文章引用的资源目录，不运行 Hexo 生成、清理或部署命令。7 篇正式文章为：
+
+| Hexo 源文件 | Hugo Page Bundle |
+| --- | --- |
+| `source/_posts/2025-03-16-record.md` | `content/post/LOG-Hexo/index.md` |
+| `source/_posts/2025-03-20-黑洞裸奇点与宇宙监督假设.md` | `content/post/黑洞裸奇点与宇宙监督假设/index.md` |
+| `source/_posts/2025-11-08-一些问题与解答.md` | `content/post/一些问题与解答/index.md` |
+| `source/_posts/2025-11-27-2025-11-25-从电磁辐射到引力波-2-1.md` | `content/post/从电磁辐射到引力波-2-1/index.md` |
+| `source/_posts/2025-11-28-2025-11-28-从电磁波到引力波-0-1.md` | `content/post/从电磁波到引力波-0-1/index.md` |
+| `source/_posts/2026-02-09-2026-02-09-从电磁波到引力波-0-2.md` | `content/post/从电磁波到引力波-0-2/index.md` |
+| `source/_posts/2026-05-19-从0开始的EMRI.md` | `content/post/从0开始的EMRI/index.md` |
+
+4 篇草稿为：
+
+| Hexo 源文件 | Hugo Page Bundle |
+| --- | --- |
+| `source/_drafts/2019-11-01-Hexo-Theme-Snail.md` | `content/post/hexo-theme-snail/index.md` |
+| `source/_drafts/2025-11-25-从电磁辐射到引力波-1.md` | `content/post/从电磁辐射到引力波-0/index.md` |
+| `source/_drafts/2026-02-09-2026-02-09-从电磁波到引力波-0-2.md` | `content/post/从电磁波到引力波-0-2-draft/index.md` |
+| `source/_drafts/2026-03-17-KerrGeodesicOrbit.md` | `content/post/the-theory-of-kerr-timelike-geodesic-motion/index.md` |
+
+正式文章和草稿中存在相似标题时使用不同 Bundle 名称，避免两个 `index.md` 生成相同 URL。这里记录的是迁移时清单；后续用户删除或继续编辑某篇草稿，不改变迁移工程已经处理过 4 篇草稿的事实。
+
 ## Hugo 目标结构
 
 文章使用 Hugo Page Bundle，文章名作为 Bundle 目录名，内容入口保留为 Hugo 要求的 `index.md`：
@@ -50,6 +75,75 @@ Hexo 中没有字面意义上的 `LOG.md`；文件 `source/_posts/2025-03-16-rec
 - `<!-- more -->`、`<!--more -->` 和 `<!-- more-->` 统一为 `<!--more-->`。
 - EMRI 正文中的 Hexo 图片路径改为 Bundle 内的 `waveform1.png`、`waveform3.png` 和 `waveform5.png`。
 - 正式文章和同名草稿使用不同 slug，避免 Hugo 路由冲突。
+
+### Front matter 字段转换
+
+逐篇保留原 `title`、`date`、分类和标签，不用文件修改时间代替文章日期。主要字段对应为：
+
+| Hexo / Snail 字段 | Hugo 字段 | 处理原则 |
+| --- | --- | --- |
+| `title` | `title` | 原文保留 |
+| `subtitle` | `description` | 用于卡片摘要和 meta description |
+| `date` | `date` | 保留原时区和发布日期 |
+| `categories` | `categories` | 标量或数组统一为 YAML 列表 |
+| `tag` / `tags` | `tags` | 统一为 `tags` 列表 |
+| `header-img` | `image` | 图片复制进当前 Bundle 后写相对路径 |
+| `catalog` / `tocnum` | `toc` | 只转换目录开关，不给标题手工编号 |
+| Hexo `_drafts` | `draft: true` | Hugo 正式构建继续排除草稿 |
+
+一个迁移后的典型 front matter 为：
+
+```yaml
+---
+title: "文章标题"
+description: "原 subtitle"
+date: 2026-02-09T00:00:00+08:00
+categories:
+    - 物理
+tags:
+    - 引力波
+image: "header.jpg"
+toc: true
+math: true
+draft: false
+---
+```
+
+主题会给目录自动编号，因此正文标题只保留 `## 背景` 这样的语义文字，不为迁移而添加“一、二、三”。已有正文中的编号属于原文章内容时则不擅自重写。
+
+### 图片和资源路径转换
+
+Hexo 文章可能从 `source/images/`、与文章同名的资源目录或主题约定路径引用图片。Hugo Page Bundle 改为“内容与资源同目录”：
+
+```text
+content/post/example/
+├── index.md
+├── header.jpg
+└── images/
+    └── figure-01.png
+```
+
+正文使用相对于 `index.md` 的路径：
+
+```markdown
+![图注](images/figure-01.png)
+```
+
+模板通过 `.Page.Resources` 识别 Bundle 资源，Hugo 才能生成页面级图片、Open Graph 头图和衍生尺寸。迁移时逐张复制而不是重新压缩，迁移前后 SHA-256 一致；网页优化属于后续独立工程，不能混入“内容无损迁移”的验收。
+
+### Hexo 特有语法与 Markdown 适配
+
+迁移审计逐篇搜索：
+
+- Hexo tag plugin，例如 `{% ... %}`；
+- Snail 主题专用 front matter；
+- `<!-- more -->` 的不同空格写法；
+- 主题根路径图片和绝对站点路径；
+- fenced code block 的语言标识和围栏配对；
+- TeX 分隔符、`align`、`\tag` 和 `\notag`；
+- 原始 HTML 与可能被 Goldmark 过滤的标签。
+
+摘要标记统一为 Hugo 能识别的 `<!--more-->`。普通 fenced code block 原样保留语言名称，不把程序代码当公式处理。数学文章增加 `math: true`，再由 Goldmark passthrough 保护 TeX；迁移阶段不改写公式推导、符号或编号语义。
 
 ## 保护与验证
 
@@ -340,3 +434,19 @@ static/vendor/mathjax/4.1.3/
 - 根路径和 `/LKWL.github.io/` 子路径均通过验证。
 
 本次没有覆盖 `public/`，也没有提交、推送或部署。
+
+### 验收层级不能混用
+
+迁移完成需要区分三个层级：
+
+1. **文件迁移完成**：目标 Bundle、front matter、正文和图片已经按清单落盘，Hexo 源仍只读，哈希与数量审计通过。
+2. **Hugo 构建成功**：正式内容和 `--buildDrafts` 都能由 Hugo Extended 0.164.0 生成，模板、短代码、资源管道和本地 MathJax 文件无构建错误。
+3. **浏览器显示验证通过**：实际打开生成页面，在桌面和 390px 窄屏检查目录、代码块、图片、公式编号、横向公式滚动、头图和链接；浏览器请求的本地脚本与字体返回 200，页面本身没有横向溢出。
+
+只有第一层不能证明 Hugo 能解析内容；只有第二层不能证明公式和布局正确；只有本地浏览器显示正确也不能证明 Hexo 源未被意外改写。因此交付报告必须分别列出三类证据，不能笼统写成“迁移成功”。
+
+### CI 与发布行为
+
+MathJax 文件位于 `static/vendor/mathjax/4.1.3/`，已经是仓库中的静态输入。GitHub Actions 构建时 Hugo 会原样复制这些文件，不执行 npm 安装，也不从 CDN 下载 MathJax。因此 CI 只需要现有 Hugo Extended 环境；如果将来更换 MathJax 版本，必须同时更新主脚本、NewCM 字体、许可证、第三方声明和模板中的版本路径，并重新验证根路径与项目子路径。
+
+本轮验证输出到独立临时目录，没有修改 `public/` 或 `resources/`。推送和 Pages 部署属于后续外部状态操作，只有在重新确认 Git 变更范围后才执行。
