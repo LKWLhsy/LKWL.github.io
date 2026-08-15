@@ -29,7 +29,7 @@ aliases:
 
 本次更新为博客增加两个长期栏目：
 
-1. **摄影**：按期发布摄影作品，每一期拥有独立正文、封面、照片和图注，并复用 Stack 自带的 PhotoSwipe。
+1. **摄影**：按期发布摄影作品，每一期拥有独立正文、封面、照片和图注，并使用 Stack 自带的 PhotoSwipe。
 2. **书与影**：优先展示“个人 Top 10 电影”等长期榜单，再记录当年的观影与阅读。
 
 ---
@@ -83,7 +83,40 @@ assets/icons/book-movie.svg
 菜单使用站点内部路径，由 Hugo 根据 GitHub Pages 的项目子路径生成最终 URL。
 
 ---
+## 摄影模板与样式
 
+新增模板：
+
+```text
+layouts/photography/list.html
+layouts/photography/single.html
+```
+
+列表页按照：
+
+```text
+issue 降序 → date 降序
+```
+
+显示每一期的：
+
+- 期数
+- 封面
+- 标题
+- 日期
+- 简介
+- 地点
+- 照片数量
+
+新增样式：
+
+```text
+assets/scss/partials/custom-components/_photography.scss
+```
+
+并在 `assets/scss/custom.scss` 中导入。
+
+---
 ## 摄影栏目的内容结构
 
 摄影栏目使用 Hugo Page Bundle。栏目入口是 branch bundle，每一期是 leaf bundle。以下目录树：
@@ -275,7 +308,7 @@ Hugo 会在构建时缓存处理结果 ([Hugo 图片处理](https://gohugo.io/co
 {{</* photo-gallery files="photos/01.jpg,photos/02.jpg" */>}}
 ```
 
-`global` 不是“从任意磁盘路径取图”。`resources.Get` 只能读取 Hugo asset pipeline 中的资源，路径相对于 `assets/`，不能写 `~`、Windows 绝对路径或文章目录路径。文章自己的照片则必须使用 `.Page.Resources.GetMatch` 或 `.Page.Resources.Match`，并放在与 `index.md` 同一个 Page Bundle 下。
+`global` 不是“从任意磁盘路径取图”。`resources.Get` 只能读取 Hugo asset pipeline 中的资源，路径相对于 `assets/`，不能写 `~`、Windows 绝对路径或文章目录路径。文章自己的照片则必须使用 `.Page.Resources.GetMatch` 或 `.Page.Resources.Match`，并放在与 `index.md` 同一个 Page Bundle 下，正如前面刨析的结构展示的那样。
 
 ### 资源元数据、图片处理和 PhotoSwipe 调用链
 
@@ -319,71 +352,46 @@ Page Bundle 原图
 {{</* photo-gallery files="photos/03.jpg,photos/04.jpg" */>}}
 ```
 
-### “雨后彩虹”实际修正
-
-正式文章采用以下结构：
-
-```text
-content/photography/2026-07-22-彩虹/
-├── index.md
-└── photos/
-    ├── DSC_9792.jpg
-    ├── DSC_9800.jpg
-    ├── DSC_9806.jpg
-    └── DSC_9835.jpg
-```
-
-最初无法渲染的根因是文章本地图片与全局 asset resource 混用。修正后，`demoImage: "photos/DSC_9792.jpg"` 只负责本期列表封面，正文使用两次 `files` 模式：
-
-```markdown
-暴雨刚刚停下时，天空出现了第一道彩虹……
-
-{{</* photo-gallery files="photos/DSC_9792.jpg,photos/DSC_9800.jpg" */>}}
-
-随着太阳西沉，彩虹逐渐与城市和桥梁重叠……
-
-{{</* photo-gallery files="photos/DSC_9806.jpg,photos/DSC_9835.jpg" */>}}
-```
-
-示例期 `issue-000` 存在于历史提交 `897a646`，当前工作区已经删除。`global` 模式仍受短代码支持，但当前只在 LOG 的转义示例中展示；当前 `assets/img/default-cover.jpg` 为 890,351 bytes。正式摄影期继续使用 Page Bundle 路径。
-
 ---
 
-## 摄影模板与样式
+## 书与影模板与样式
 
 新增模板：
 
 ```text
-layouts/photography/list.html
-layouts/photography/single.html
+layouts/page/books-and-film.html
 ```
 
-列表页按照：
+Front Matter 通过：
 
-```text
-issue 降序 → date 降序
+```yaml
+layout: "books-and-film"
 ```
 
-显示每一期的：
+选择该模板，不影响其他普通页面。
 
-- 期数
-- 封面
-- 标题
-- 日期
-- 简介
-- 地点
-- 照片数量
+页面包含：
+
+- 排名徽章
+- 本地响应式 WebP 海报
+- 中文名与原名
+- 年份、导演、片长
+- 个人评分
+- 个人短评
+- 官方详情链接
+- 海报来源链接
+- 2026 空状态
+- Waline 评论
 
 新增样式：
 
 ```text
-assets/scss/partials/custom-components/_photography.scss
+assets/scss/partials/custom-components/_books-and-film.scss
 ```
 
-并在 `assets/scss/custom.scss` 中导入。
+海报采用紧凑的竖向卡片：宽屏五列、中等屏幕三列、窄屏两列。移动端隐藏较长短评，并缩小元数据字号，保证两列海报仍可阅读。
 
 ---
-
 ## 书与影栏目
 
 栏目入口：
@@ -410,7 +418,7 @@ content/books-and-film/index.zh.md
 
 ## 书与影数据
 
-数据文件：
+框架性的数据文件存放在根目录的 `data` 文件下：
 
 ```text
 data/books-and-film/top10-movies.toml
@@ -433,16 +441,13 @@ data/books-and-film/2026.toml
     note            = "关于时间、选择与归途的科幻旅程。"
 ```
 
-海报保存为：
+海报保存在根目录 `assets` 文件下：
 
 ```text
 assets/img/books-and-film/movies/interstellar.jpg
 ```
 
-详情信息和海报来自派拉蒙官方页面：
-
-- [影片详情](https://www.paramountpictures.com/movies/interstellar)
-- [官方海报资源](https://public-website-assets.paramountpictures.com/paramount2025/s3fs-public/styles/poster_medium/public/intersteller_en_dvd_800x1200.jpg?itok=YxrRaJN2)
+详情信息和海报来自派拉蒙官方页面： [影片详情](https://www.paramountpictures.com/movies/interstellar) , [官方海报资源](https://public-website-assets.paramountpictures.com/paramount2025/s3fs-public/styles/poster_medium/public/intersteller_en_dvd_800x1200.jpg?itok=YxrRaJN2)
 
 页面使用本地海报副本，避免长期热链第三方服务器。海报仅作为影片记录封面，页面同时保留来源链接。
 
@@ -485,45 +490,6 @@ assets/img/books-and-film/movies/interstellar.jpg
 
 ---
 
-## 书与影模板与样式
-
-新增模板：
-
-```text
-layouts/page/books-and-film.html
-```
-
-Front Matter 通过：
-
-```yaml
-layout: "books-and-film"
-```
-
-选择该模板，不影响其他普通页面。
-
-页面包含：
-
-- 排名徽章
-- 本地响应式 WebP 海报
-- 中文名与原名
-- 年份、导演、片长
-- 个人评分
-- 个人短评
-- 官方详情链接
-- 海报来源链接
-- 2026 空状态
-- Waline 评论
-
-新增样式：
-
-```text
-assets/scss/partials/custom-components/_books-and-film.scss
-```
-
-海报采用紧凑的竖向卡片：宽屏五列、中等屏幕三列、窄屏两列。移动端隐藏较长短评，并缩小元数据字号，保证两列海报仍可阅读。
-
----
-
 ## 构建与发布
 
 发布前严格检查：
@@ -546,80 +512,180 @@ git commit -m "Add photography and books-and-film sections"
 git push
 ```
 
-本次执行阶段没有提交、推送或部署。
-
----
-
-## 验证结果
-
-本次执行完成了严格构建、生成文件检查和真实浏览器检查：
-
-- 使用 Hugo 0.164.0 Extended 执行 `hugo --gc --minify --panicOnWarning`，退出码为 0，警告数为 0。
-- 共生成 43 个页面、15 个别名页面，并处理 11 张图片。
-- 摄影列表页、摄影第 00 期和书与影页均成功生成。
-- 摄影列表封面宽度为 720 像素，正文预览图宽度为 1200 像素；二者均为 Hugo 从默认图片生成的 WebP，而不是直接输出原始大图。
-- 《星际穿越》本地海报被处理为宽度 600 像素的 WebP，生成文件约 126 KB。
-- 在 1440 × 1000 桌面视口和 390 × 844 手机视口中检查三个页面，均返回 HTTP 200，图片均完整加载，且没有横向溢出。
-- 摄影详情页的 PhotoSwipe 灯箱可正常打开。
-- 书与影页按预期先显示“个人 Top 10 电影”，并在下方显示 2026 年空状态。
-- 浏览器检查未发现本站资源请求失败。
-- `git diff --check` 通过，且本次没有修改 `public/` 或 `resources/`。
-- 本次没有执行 Git 提交、推送或 GitHub Pages 部署。
-
-> 相机原片用于保存作品，网页母版用于发布作品，响应式衍生图用于向访客展示作品。三者不应混为同一个文件。
-
 ---
 
 ## 书与影索引与海报网格调整
 
-### 调整原因
+### 问题定位与真实文件
 
-最初的榜单网格固定为单列：
+书与影的真实网格选择器是 `.media-grid`，结构和样式分别位于：
 
-```scss
-.ranking-grid {
-    grid-template-columns: 1fr;
-}
+```text
+layouts/page/books-and-film.html
+assets/scss/partials/custom-components/_books-and-film.scss
 ```
 
-每个条目又使用横向“海报 + 详情”布局，因此只有《星际穿越》一个条目时，卡片会占满整个内容宽度，看起来更像文章头图而不是影片海报。
+实际问题不是某个“单列配置”，而是早期页面只有一个条目时，缺少并列索引和紧凑的海报网格，单张卡片在主内容区域显得过大。调整后的工程拆成四层：内容入口决定页面模板，`data/` 保存条目，模板组织标签和卡片，SCSS 决定海报比例与响应式列数。
 
-### 分类索引
+### 页面入口与模板选择
 
-修改文件：
+书与影入口文件是：
+
+```text
+content/books-and-film/index.zh.md
+```
+
+其中两个字段决定页面类型和布局：
+
+```yaml
+layout: "books-and-film"
+type: "page"
+```
+
+Hugo 因此使用：
 
 ```text
 layouts/page/books-and-film.html
 ```
 
-新增两个并列标签：
+而不是通用的 `layouts/single.html` 或 `layouts/list.html`。该模板只定义 `main`，没有定义 `right-sidebar`，因此书与影页面使用完整主内容区域，不加载首页或普通列表的右侧组件。
+
+### 数据文件与模板读取
+
+书与影的内容数据不写死在 HTML 中，而是分别保存在：
+
+```text
+data/books-and-film/top10-movies.toml
+data/books-and-film/2026.toml
+```
+
+模板开头通过 `hugo.Data` 读取这两个文件：
+
+```go-html-template
+{{- $collection := index hugo.Data "books-and-film" -}}
+{{- $ranking := index $collection "top10-movies" -}}
+{{- $yearData := index $collection "2026" -}}
+{{- $movies := default (slice) $yearData.movies -}}
+{{- $books := default (slice) $yearData.books -}}
+```
+
+文件名与模板键一一对应：`top10-movies.toml` 对应 `top10-movies`，`2026.toml` 对应 `2026`。`default (slice)` 把缺失的 `movies` 或 `books` 转成空集合，避免模板在年度数据尚未填写时构建失败。
+
+当前 `2026.toml` 只有标题、说明、类型和权重，没有 `movies` 或 `books`，所以模板进入空状态并显示“2026 年的观影与阅读记录尚未添加”。
+
+### 栏目扩展的数据流
+
+从菜单进入页面后，完整调用链是：
+
+```text
+config/_default/menu.zh.toml
+  → content/books-and-film/index.zh.md
+  → layout: books-and-film
+  → layouts/page/books-and-film.html
+  → hugo.Data["books-and-film"]
+  → top10-movies.toml / 2026.toml
+  → resources.Get 读取 assets 海报
+  → Hugo Fill 生成 WebP
+  → .media-grid 响应式卡片
+  → 浏览器标签脚本切换面板
+```
+
+这条链也决定日常修改位置：页面标题和简介属于 `content/`，电影与书籍条目属于 `data/`，标签和卡片结构属于 `layouts/`，列数、比例和视觉样式属于 `assets/scss/`。
+
+### 分类索引与状态同步
+
+Top 10 和 2026 是模板 `layouts/page/books-and-film.html` 中明确声明的两个并列索引：
 
 ```html
 <nav class="books-and-film-tabs" role="tablist" aria-label="书与影分类">
-    <button type="button" role="tab" data-books-tab="top10">Top 10</button>
-    <button type="button" role="tab" data-books-tab="2026">2026</button>
+    <button type="button" role="tab" id="tab-top10" aria-controls="panel-top10" aria-selected="true" data-books-tab="top10">Top 10</button>
+    <button type="button" role="tab" id="tab-2026" aria-controls="panel-2026" aria-selected="false" tabindex="-1" data-books-tab="2026">2026</button>
 </nav>
 ```
 
-脚本会同步以下状态：
+每个按钮的 `data-books-tab` 必须与对应面板的 `data-books-panel` 相同。模板脚本收集所有标签和面板，再由 `activate()` 同步状态：
 
-- `aria-selected`：供辅助技术识别当前标签。
-- `tabindex`：只让当前标签进入正常键盘顺序。
-- `hidden`：隐藏未选择的内容面板。
-- URL hash：记录 `#top10` 或 `#2026`。
-- 左右方向键：在两个标签之间切换。
+```javascript
+const activate = (name, updateHash = false) => {
+    if (!validTabs.has(name)) name = 'top10';
 
-脚本没有第三方依赖，也不会访问外部服务。
+    tabs.forEach((tab) => {
+        const active = tab.dataset.booksTab === name;
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+    });
+    panels.forEach((panel) => {
+        panel.hidden = panel.dataset.booksPanel !== name;
+    });
 
-### 五列海报网格
+    if (updateHash) history.replaceState(null, '', `#${name}`);
+};
+```
 
-修改样式：
+各状态的作用如下：
+
+- `aria-selected` 告诉辅助技术哪个标签处于选中状态。
+- `tabIndex` 只让当前标签进入正常键盘顺序。
+- `hidden` 控制两个内容面板的实际显示与隐藏。
+- URL hash 保存 `#top10` 或 `#2026`，刷新后仍能恢复选择。
+- 非法或不存在的 hash 通过 `validTabs` 回退到 `top10`。
+- 左右方向键循环选择相邻标签，并把键盘焦点移动到新标签。
+
+脚本直接保存在页面模板中，不依赖第三方 JavaScript。以后增加第三个并列索引时，需要同时增加数据入口、按钮和面板；只要 `data-books-tab` 与 `data-books-panel` 对应，现有脚本会自动把新标签加入切换集合。
+
+### 海报资源管道
+
+Top 10 数据中的 `cover` 是相对于 `assets/` 的资源路径。例如：
+
+```toml
+cover = "img/books-and-film/movies/interstellar.jpg"
+```
+
+对应源文件为：
+
+```text
+assets/img/books-and-film/movies/interstellar.jpg
+```
+
+模板先读取资源，再生成固定比例的 WebP：
+
+```go-html-template
+{{- $item := . -}}
+{{- $poster := resources.Get .cover -}}
+{{ with $poster }}
+    {{- $preview := .Fill "520x780 webp q82" -}}
+    <img src="{{ $preview.RelPermalink }}"
+         width="{{ $preview.Width }}"
+         height="{{ $preview.Height }}"
+         loading="lazy"
+         alt="{{ $item.title }}海报">
+{{ else }}
+    <div class="media-poster-placeholder">{{ substr $item.title 0 1 }}</div>
+{{ end }}
+```
+
+完整过程是：
+
+```text
+data.cover
+  → resources.Get
+  → assets/img/books-and-film/movies/
+  → Fill "520x780 webp q82"
+  → $preview.RelPermalink
+  → 浏览器加载本地 WebP
+```
+
+海报放在 `assets/` 而不是 `static/`，因为 `resources.Get` 和 `Fill` 只能处理 Hugo 资源管道中的图片。找不到海报时模板不会输出损坏的 `<img>`，而是显示片名首字符占位块。`posterSource` 只生成“海报来源”链接，不参与海报下载或构建。
+
+### 响应式海报网格
+
+网格样式位于：
 
 ```text
 assets/scss/partials/custom-components/_books-and-film.scss
 ```
 
-响应式列数：
+该文件由 `assets/scss/custom.scss` 导入。当前真实列数为：
 
 ```scss
 .media-grid {
@@ -639,43 +705,48 @@ assets/scss/partials/custom-components/_books-and-film.scss
 }
 ```
 
-海报区域统一使用：
+窄屏保留两列以保持海报列表的紧凑感，768px 起使用三列，1200px 起使用五列。`minmax(0, 1fr)` 允许卡片等分可用宽度，同时避免卡片内容把网格轨道强行撑宽。
+
+海报容器与图片分别使用：
 
 ```scss
-aspect-ratio: 2 / 3;
-object-fit: cover;
+.media-poster {
+    aspect-ratio: 2 / 3;
+}
+
+.media-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 ```
 
-Hugo 为每张源海报生成：
+Hugo 生成的 520×780 图片和 CSS 的 2:3 比例一致，因此各卡片海报等高；`.media-details` 再负责标题、年份、导演、片长、评分、状态和备注，不需要为每一部电影单独写布局。
 
-```go-html-template
-{{ $preview := .Fill "520x780 webp q82" }}
-```
+### 示例条目与日常添加
 
-页面实际加载本地 WebP，而不是直接加载外部海报。
-
-### 《蜘蛛侠：崭新之日》演示条目
-
-修改数据：
+Top 10 数据文件是：
 
 ```text
 data/books-and-film/top10-movies.toml
 ```
 
-新增本地海报：
-
-```text
-assets/img/books-and-film/movies/spider-man-brand-new-day.jpg
-```
-
-条目使用 Sony 官方影片页提供的资料，导演为 Destin Daniel Cretton，年份为 2026。由于本站尚未形成实际观影评价，条目明确填写：
+《蜘蛛侠：崭新之日》的当前条目保留“待上映 / 评分待定”，避免把演示排名写成已经形成的个人评价：
 
 ```toml
-status = "待上映 / 评分待定"
-note   = "用于展示榜单海报网格的待上映示例，名次并非最终评价。"
+[[items]]
+    rank          = 2
+    title         = "蜘蛛侠：崭新之日"
+    originalTitle = "Spider-Man: Brand New Day"
+    year          = 2026
+    director      = "Destin Daniel Cretton"
+    cover         = "img/books-and-film/movies/spider-man-brand-new-day.jpg"
+    url           = "https://www.sonypictures.com/movies/spidermanbrandnewday"
+    status        = "待上映 / 评分待定"
+    note          = "用于展示榜单海报网格的待上映示例，名次并非最终评价。"
 ```
 
-来源：
+该条目的资料和海报均保留原工程记录中的官方来源：
 
 - [Sony 官方影片页](https://www.sonypictures.com/movies/spidermanbrandnewday)
 - [Sony 官方海报](https://www.sonypictures.com/sites/default/files/styles/max_860x460/public/title-key-art/spidermanbrandnewday_onesheet_1400x2100.jpg?itok=Nh6VAAh-)
@@ -686,111 +757,269 @@ note   = "用于展示榜单海报网格的待上映示例，名次并非最终�
 AC7C3710284AFEED0424F3795151184F7CA756115D0722BB5E591D12692C9E59
 ```
 
+新增 Top 10 电影时只需要：
+
+1. 把海报保存到 `assets/img/books-and-film/movies/`。
+2. 在 `top10-movies.toml` 增加一个 `[[items]]`。
+3. 设置唯一的 `rank`、片名、年份、海报路径和影片链接。
+4. 按实际情况填写导演、片长、个人评分、状态、备注和海报来源。
+
+新增 2026 年度记录时，在 `data/books-and-film/2026.toml` 中添加：
+
+```toml
+[[movies]]
+title = "电影名称"
+
+[[books]]
+title = "书籍名称"
+```
+
+当前年度面板模板只读取条目的 `title`。如果以后希望年度条目也显示海报、评分或日期，需要先扩展 `layouts/page/books-and-film.html` 中的年度卡片结构，再增加对应数据字段；仅向 TOML 添加模板未读取的字段不会自动显示。
+
 ---
 
 ## 摄影页布局与卡片比例
 
-### 取消右侧栏
+### 模板选择与右侧栏
 
-摄影列表和详情模板原先都定义了 `right-sidebar`。本次从以下文件删除该定义：
+摄影栏目使用两个更具体的模板：
 
 ```text
 layouts/photography/list.html
 layouts/photography/single.html
 ```
 
-摄影列表现在使用完整主内容宽度；详情页保持单栏文章和 PhotoSwipe 图集。
+Hugo 生成摄影栏目入口时优先选择 `layouts/photography/list.html`，不会进入通用 `layouts/list.html`。生成单期详情时使用 `layouts/photography/single.html`。
 
-### 与书与影统一外壳
+这两个模板都只定义了 `main`，没有定义 `right-sidebar`：
 
-摄影标题和期刊网格现在共同放入：
+```go-html-template
+{{ define "main" }}
+    ...
+{{ end }}
+```
+
+本地 Stack 基础模板 `themes/stack/layouts/baseof.html` 对右侧栏只提供一个空 block：
+
+```go-html-template
+{{- block "right-sidebar" . -}}{{ end }}
+```
+
+因此摄影页面不显示右侧栏是模板选择的结果，不是通过 CSS 把右栏隐藏。列表页可以使用完整主内容宽度；详情页继续渲染文章、评论、Footer 和 PhotoSwipe。
+
+从工程演进看，这两个项目覆盖模板在该次栏目改造前都曾定义 `right-sidebar`；当时从以下文件删除了该 block：
+
+```text
+layouts/photography/list.html
+layouts/photography/single.html
+```
+
+所以“取消右侧栏”不是主题全局配置，也没有修改通用 `layouts/list.html`：它是摄影专用模板的一次局部改动。当前源码中已看不到被删除的 block，只保留上述 `main` 定义；其他栏目仍按各自模板决定是否提供右侧栏。
+
+### 与书与影统一页面外壳
+
+摄影标题和期刊网格共同放在以下容器中：
 
 ```html
 <article class="photography-shell card">
 ```
 
-标题区使用底部分隔线，期刊卡片采用统一边框、圆角、阴影、内边距和等高内容区域。
-
-响应式列数：
+这段结构位于 `layouts/photography/list.html`，对应样式位于：
 
 ```text
-小于 768 px：1 列
-768–1199 px：2 列
-1200 px 及以上：3 列
+assets/scss/partials/custom-components/_photography.scss
 ```
 
-### 自定义摄影卡片形状
+`.photography-shell` 复用 Stack 的 `card` 外观；`.photography-hero` 提供标题区和底部分隔线；`.photography-issue`、`.photography-issue-link` 与详情区再定义期刊卡片的边框、圆角、阴影、内边距和等高内容区域。因此“与书与影看齐”指两者都采用“栏目标题 + 规则网格 + 统一卡片”的页面层次，不代表共用 `.media-grid` 或同一套 SCSS。
 
-配置位置：
+### 栏目配置与列表数据流
+
+摄影栏目入口配置位于：
 
 ```text
 content/photography/_index.zh.md
 ```
 
-默认配置：
+当前配置为：
+
+```yaml
+title: "光与影"
+description: "摄影，是光影的艺术，是时空的快照。"
+cardAspect: "landscape"
+comments: true
+draft: false
+```
+
+列表模板读取栏目参数和所有正式摄影页面，完整数据流是：
+
+```text
+content/photography/_index.zh.md
+  → .Params.cardAspect
+  → layouts/photography/list.html
+  → .RegularPages
+  → 按 Params.issue 降序
+  → Page Bundle 封面资源
+  → Hugo Fill 生成 WebP
+  → .photography-issues 响应式网格
+```
+
+排序代码为：
+
+```go-html-template
+{{- $issues := sort .RegularPages "Params.issue" "desc" -}}
+```
+
+因此每一期必须在 front matter 中提供可转换为整数的 `issue`。日期只负责显示，不决定列表顺序。
+
+### 封面选择优先级
+
+封面处理代码位于：
+
+```text
+layouts/photography/list.html
+```
+
+当前逻辑为：
+
+```go-html-template
+{{- $cover := false -}}
+{{- with .Params.demoImage -}}
+    {{- $cover = $page.Resources.GetMatch . -}}
+    {{- if not $cover }}{{ $cover = resources.Get . }}{{ end -}}
+{{- else -}}
+    {{- with .Params.cover -}}
+        {{- $cover = $page.Resources.GetMatch . -}}
+    {{- end -}}
+{{- end -}}
+```
+
+优先级如下：
+
+1. 存在 `demoImage` 时，先在当前摄影 Page Bundle 中查找。
+2. Bundle 中找不到 `demoImage` 时，再调用全局 `resources.Get`，因此可以引用 `assets/` 中的示例图。
+3. 没有 `demoImage` 时才读取 `cover`，并且 `cover` 只从当前 Page Bundle 查找。
+4. 两者都找不到时，卡片仍然输出标题和信息，但不会生成封面 `<img>`。
+
+照片数量来自：
+
+```go-html-template
+{{- $photoCount := len (.Resources.Match "photos/*") -}}
+{{- if and (eq $photoCount 0) .Params.demoImage }}{{ $photoCount = 1 }}{{ end -}}
+```
+
+正式摄影期统计 `photos/` 下的资源；只有 demo 条目在没有本地照片时按 1 张处理。
+
+### 自定义摄影卡片比例
+
+卡片比例由栏目入口统一配置：
 
 ```yaml
 cardAspect: "landscape"
 ```
 
-可用值：
-
-```text
-landscape  3:2
-wide       16:9
-square     1:1
-portrait   2:3
-```
-
-模板会根据设置选择匹配的 Hugo 图片处理尺寸：
+模板首先验证允许值，并建立图片处理参数表：
 
 ```go-html-template
-landscape → 720x480 WebP
-wide      → 720x405 WebP
-square    → 720x720 WebP
-portrait  → 600x900 WebP
+{{- $aspect := default "landscape" .Params.cardAspect -}}
+{{- $validAspects := slice "landscape" "wide" "square" "portrait" -}}
+{{- if not (in $validAspects $aspect) }}{{ $aspect = "landscape" }}{{ end -}}
+{{- $fillSpecs := dict
+    "landscape" "720x480 webp q82"
+    "wide" "720x405 webp q82"
+    "square" "720x720 webp q82"
+    "portrait" "600x900 webp q82"
+-}}
 ```
 
-如果填写了不支持的值，模板会回退到 `landscape`。比例在栏目级统一设置，避免同一行的卡片高低不齐。
+四种配置对应：
+
+| 值 | 卡片比例 | Hugo 输出 |
+| --- | --- | --- |
+| `landscape` | 3:2 | 720×480 WebP |
+| `wide` | 16:9 | 720×405 WebP |
+| `square` | 1:1 | 720×720 WebP |
+| `portrait` | 2:3 | 600×900 WebP |
+
+非法值会回退到 `landscape`。模板将比例写入 class：
+
+```go-html-template
+<section class="photography-issues photography-aspect-{{ $aspect }}">
+```
+
+SCSS 再用同一个 class 设置 `aspect-ratio`，确保 Hugo 生成尺寸和浏览器卡片形状一致。比例在栏目级统一，而不是为每一期单独设置，从而避免同一网格中的卡片高低不齐。
+
+### 摄影响应式网格
+
+摄影样式位于：
+
+```text
+assets/scss/partials/custom-components/_photography.scss
+```
+
+该文件同样由 `assets/scss/custom.scss` 导入。实际网格规则是：
+
+```scss
+.photography-issues {
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+    .photography-issues {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1200px) {
+    .photography-issues {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+```
+
+因此摄影栏目默认一列，768px 起两列，1200px 起三列。它与书与影共享“栏目标题 + 卡片网格”的视觉思路，但使用独立模板、独立资源来源和独立 SCSS；修改 `.media-grid` 不会改变摄影列数，修改 `.photography-issues` 也不会影响书与影。
+
+### 摄影详情与 PhotoSwipe
+
+摄影详情模板是：
+
+```text
+layouts/photography/single.html
+```
+
+`layouts/photography/single.html` 中写的是 partial 名称；Hugo 会先查找项目根目录覆盖层，再回退到 `themes/stack/`。当前调用顺序和实际落盘文件为：
+
+```text
+partial "article/article.html"
+  → themes/stack/layouts/_partials/article/article.html
+  → 摄影正文和 photo-gallery 短代码
+partial "comments/include"（仅 comments 不为 false）
+  → themes/stack/layouts/_partials/comments/include.html
+partialCached "footer/footer"
+  → layouts/_partials/footer/footer.html（本站根目录覆盖）
+partialCached "article/components/photoswipe"
+  → themes/stack/layouts/_partials/article/components/photoswipe.html
+```
+
+列表页只负责期刊入口和封面；正文照片的分组、WebP 缩略图、灯箱图及 PhotoSwipe 数据仍由前文记录的 `photo-gallery` 短代码负责。
 
 ---
 
-## 本轮验证
+## 栏目扩展维护映射
 
-本轮使用 Hugo 0.164.0 Extended 严格构建，并使用本机 Chrome 分别在 1440 × 1000 和 390 × 844 视口进行真实页面检查。
+书与影和摄影的日常修改位置如下：
 
-以下构建结果是该次栏目工程完成时的历史验证快照，不代表当前站点统计：
+| 修改目标 | 修改文件 | 作用层 |
+| --- | --- | --- |
+| 书与影标题、简介和评论开关 | `content/books-and-film/index.zh.md` | 页面配置 |
+| Top 10 电影条目 | `data/books-and-film/top10-movies.toml` | 结构化数据 |
+| 2026 年电影与书籍 | `data/books-and-film/2026.toml` | 结构化数据 |
+| 分类标签、面板、数据读取和卡片 HTML | `layouts/page/books-and-film.html` | 页面结构与交互 |
+| 海报列数、比例和卡片外观 | `assets/scss/partials/custom-components/_books-and-film.scss` | 页面样式 |
+| 摄影标题、简介和统一卡片比例 | `content/photography/_index.zh.md` | 栏目配置 |
+| 摄影排序、封面选择和列表卡片 | `layouts/photography/list.html` | 列表结构与资源处理 |
+| 摄影文章、评论、Footer 和 PhotoSwipe | `layouts/photography/single.html` | 详情调用链 |
+| 摄影列数、比例和卡片外观 | `assets/scss/partials/custom-components/_photography.scss` | 页面样式 |
 
-```text
-Pages:             43
-Processed images:  12
-Aliases:           15
-Exit code:          0
-Warnings:           0
-```
+维护时先按“内容或数据 → 模板 → 资源管道 → SCSS”的顺序定位问题：条目内容不对先检查 `content/` 或 `data/`，元素没有输出再检查 `layouts/`，图片没有生成检查资源路径与 Hugo Pipes，最后才检查 SCSS 的布局和显示规则。
 
-书与影检查：
-
-- 宽屏为五列网格，窄屏为两列网格。
-- Top 10 当前包含两张紧凑海报卡片。
-- 两张海报均由 Hugo 生成宽度 520 像素的本地 WebP。
-- Top 10 与 2026 可以点击切换。
-- 2026 面板可以显示空状态。
-- `#2026` 刷新后仍会恢复 2026 面板。
-- `aria-selected` 与隐藏面板状态同步。
-
-摄影检查：
-
-- 宽屏为三列，中等屏幕规则为两列，窄屏为一列。
-- 默认 `landscape` 卡片的浏览器实测宽高比为 1.50，即 3:2。
-- 列表页和详情页均没有可见右侧栏。
-- 列表封面由 Hugo 生成本地 WebP。
-- 详情图完整加载，PhotoSwipe 灯箱能够打开。
-
-通用检查：
-
-- 三个被检查页面在两种视口下均返回 HTTP 200。
-- 没有横向溢出。
-- 没有本站资源请求失败。
-- 没有安装新的浏览器、JavaScript 包或其他依赖。
-- 本轮没有修改 `public/`、`resources/`、GitHub Actions 或远程仓库状态。
+---

@@ -13,7 +13,15 @@ math: false
 comments: true
 draft: false
 ---
+>本次 Hugo 的搭建与迁移所涉及的 **代码工作** 全部由 `gpt-5.6 Sol-medium` 进行
+>
+>毕竟我也看不懂 Hugo 的这些新编译语言 (
+>
+>不过全流程框架以及内容均按本人规划设计，可以放心阅读。
 
+> WARNING: 内含大量 ai 生成内容，尽管已经经过大量人工审核修改，但本人编程水平太低难免遗留错误，请批判的阅读。
+
+---
 ## 迁移范围
 
 本次从 `D:\hexo\LKWLhsyblog` 迁移 7 篇正式文章和 4 篇草稿到当前 Hugo 站点。Hexo 源目录全程只读，没有执行写入、重命名、删除、checkout 或 reset。

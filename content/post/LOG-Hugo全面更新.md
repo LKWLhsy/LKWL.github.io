@@ -1,5 +1,5 @@
 ---
-title: "Hugo 弃用接口全面更新记录"
+title: "Hugo 弃用接口更新记录"
 description: "记录 Hugo 0.164.0 弃用警告的定位、配置与模板 API 迁移、GitHub Actions 版本统一以及严格构建验证。"
 date: 2026-08-11T22:06:40+08:00
 categories:
@@ -16,14 +16,19 @@ aliases:
     - /post/log-全面更新/
 ---
 
-## 更新背景
-> 全部基于：gpt-5.6-sol
+>本次 Hugo 的搭建与迁移所涉及的 **代码工作** 全部由 `gpt-5.6 Sol-medium` 进行
 >
-> 毕竟 Hugo 稀奇古怪的代码我也改不明白(
+>毕竟我也看不懂 Hugo 的这些新编译语言 (
+>
+>不过全流程框架以及内容均按本人规划设计，可以放心阅读。
+
+> WARNING: 内含大量 ai 生成内容，尽管已经经过大量人工审核修改，但本人编程水平太低难免遗留错误，请批判的阅读。
+
+---
+## 更新背景
 
 本次更新针对 Hugo 0.164.0 Extended 构建时出现的弃用警告。更新前，站点仍然能够完成构建，但配置和本地 Stack 主题中使用了 Hugo 已经标记为弃用的语言、数据和多站点接口。这些接口将在未来版本中删除，因此继续忽略警告只会把问题推迟到后续升级。
 
-本次处理原则是：不隐藏警告、不降低 Hugo 版本、不改变页面设计和内容结构，只把旧接口迁移到 Hugo 官方提供的新接口，并通过严格构建证明迁移完成。
 
 Hugo 官方参考资料：
 
@@ -36,7 +41,9 @@ Hugo 官方参考资料：
 
 ## 实施前基线
 
-实施前先执行常规正式构建，并单独收集所有 `deprecated` 警告。基线环境为：
+这里的“实施前”专指兼容性迁移提交 `dc50f23` 形成之前的站点，不代表当前工作区。迁移前使用 Hugo 0.164.0 Extended 完成普通构建，同时收集 `deprecated` 信息，得到以下历史快照：
+
+**历史构建输出（不是配置文件）：**
 
 ```text
 Hugo: 0.164.0 Extended
@@ -47,50 +54,69 @@ Processed images: 7
 Build exit code: 0
 ```
 
-警告主要分成三组：
+当时的问题分成三组：
 
-1. `languageCode`、`languageName` 和 `languageDirection` 配置键已经弃用。
-2. 模板中的旧 Language、Data 和 Sites 接口已经弃用。
-3. GitHub Actions 声明了 Hugo 0.154.2，但安装步骤使用 `latest`，导致声明的版本实际上没有生效。
+1. `config/_default/` 仍使用 `languageCode`、`languageName` 和 `languageDirection`。
+2. 项目覆盖模板和本地 Stack 主题仍通过旧的 Language、Data 和 Sites 接口读取数据。
+3. `.github/workflows/deploy.yml` 声明 Hugo 0.154.2，但安装步骤使用 `latest`，导致声明变量未真正控制 CI 版本。
 
-实施前 Git 工作区还包含此前完成但尚未提交的主题本地化、页脚、文章卡片、隐私政策和文章底部信息框修改。本次更新没有回退或覆盖这些内容。
+普通构建退出码为 0 只说明旧接口尚未被删除，并不代表这些接口可以继续长期使用。
 
 ---
 
 ## 语言配置迁移
 
-### 修改位置
+### 配置键与职责
 
-```text
-config/_default/config.toml
-config/_default/languages.toml
-```
+实际修改了两个配置文件：
 
-### 配置键对应关系
+| 文件 | 修改目的 |
+| --- | --- |
+| `config/_default/config.toml` | 设置站点默认区域标识 |
+| `config/_default/languages.toml` | 定义各语言的区域、显示名称、文字方向和启用状态 |
 
-```text
-languageCode      -> locale
-languageName      -> label
-languageDirection -> direction
-```
+实际对应关系为：
+
+| 旧键 | 当前键 | 用途 |
+| --- | --- | --- |
+| `languageCode` | `locale` | BCP 47 区域标识，例如 `zh-CN` |
+| `languageName` | `label` | 给访客显示的语言名称 |
+| `languageDirection` | `direction` | HTML 文字方向，例如 `ltr` |
 
 ### 根配置
 
-旧配置：
+旧代码所在文件：`config/_default/config.toml`
 
 ```toml
 languageCode = "zh-cn"
 ```
 
-新配置：
+当前代码所在文件：`config/_default/config.toml`
 
 ```toml
 locale = "zh-CN"
 ```
 
+这里的 `locale` 是站点默认区域标识。它不是 Hugo 的内容语言键；内容语言键仍由 `defaultContentLanguage = "zh"` 和 `languages.toml` 中的 `[zh]` 决定。
+
 ### 多语言定义
 
-更新后的配置为：
+旧代码所在文件：`config/_default/languages.toml`
+
+```toml
+[zh]
+    languageCode      = "zh-cn"
+    languageName      = "中文"
+    languagedirection = "ltr"
+
+[en]
+    languageCode      = "en-us"
+    languageName      = "English"
+    languagedirection = "ltr"
+    disabled          = true
+```
+
+当前代码所在文件：`config/_default/languages.toml`
 
 ```toml
 [zh]
@@ -109,163 +135,162 @@ locale = "zh-CN"
     disabled  = true
 ```
 
-此次修改没有重新启用 English。`zh` 和 `en` 仍然是 Hugo 使用的语言键，`zh-CN` 和 `en-US` 是用于 HTML、RSS 和本地化处理的区域标识。
+此次迁移没有重新启用 English。`zh` 和 `en` 是 Hugo 的语言键，模板中的 `.Language.Name` 返回这类键；`中文` 和 `English` 是 `.Language.Label`；`zh-CN` 和 `en-US` 是 `.Language.Locale`。三个字段不能互换。
+
+配置生效关系为：
+
+```text
+config/_default/config.toml
+  → defaultContentLanguage = "zh"
+  → config/_default/languages.toml 中的 [zh]
+  → Language.Name / Label / Locale / Direction
+  → HTML、RSS、语言切换器和翻译链接
+```
 
 ---
 
 ## 项目根目录模板迁移
 
-根目录 `layouts/` 中的模板优先级高于 `themes/stack/layouts/`。因此，必须同时检查项目覆盖模板和本地主题模板，不能只修改主题副本。
+项目根目录 `layouts/` 中的同路径模板优先于 `themes/stack/layouts/`。所以兼容性扫描必须先确认实际生效的根覆盖文件，再检查本地主题后备文件。
 
 ### 统计页站点集合
 
-修改位置：
-
-```text
-layouts/_default/stats.html
-```
-
-旧写法：
+旧代码所在文件：`layouts/_default/stats.html`
 
 ```go-html-template
-{{ range .Sites }}
+{{- range .Sites -}}
+{{- $allPosts = $allPosts | append (where .RegularPages "Section" "post") -}}
+{{- end -}}
 ```
 
-新写法：
+当前代码所在文件：`layouts/_default/stats.html`
 
 ```go-html-template
-{{ range hugo.Sites }}
+{{- range hugo.Sites -}}
+{{- $allPosts = $allPosts | append (where .RegularPages "Section" "post") -}}
+{{- end -}}
 ```
 
-统计页仍然遍历所有启用站点并汇总 `post` 分区中的文章。由于 English 处于禁用状态，当前实际只汇总中文站点。
+本站实际迁移的旧调用只有 `.Sites`。早期日志中补充出现的 `.Site.Sites` 和 `.Page.Sites` 是同类旧接口的概念说明，不是提交 `dc50f23` 中实际修改过的代码，不能把三者都写成本站变更。
 
-### 翻译页面名称
+迁移只改变站点集合的入口。后面的 `.RegularPages`、`Section == "post"`、追加顺序和统计方式均未修改。English 当前禁用，因此 `hugo.Sites` 实际只返回中文站点；以后重新启用 English 时，该统计页会继续汇总所有启用语言的 `post` 页面。
 
-修改位置：
+### 文章翻译名称
 
-```text
-layouts/_partials/article/components/details.html
-layouts/_partials/sidebar/left.html
-```
-
-旧写法：
+旧代码所在文件：`layouts/_partials/article/components/details.html`
 
 ```go-html-template
-{{ .Language.LanguageName }}
+{{ range $Page.Translations }}
+    <a href="{{ .RelPermalink }}" class="link">{{ .Language.LanguageName }}</a>
+{{ end }}
 ```
 
-新写法：
+当前代码所在文件：`layouts/_partials/article/components/details.html`
 
 ```go-html-template
-{{ .Language.Label }}
+{{ range $Page.Translations }}
+    <a href="{{ .RelPermalink }}" class="link">{{ .Language.Label }}</a>
+{{ end }}
 ```
 
-### 语言键判断
+这里只需要给读者显示“中文”或“English”，所以必须使用 `Label`，不能用返回 `zh`/`en` 的 `Name`，也不能用返回 `zh-CN`/`en-US` 的 `Locale`。
 
-旧写法：
+### 左侧栏语言键和显示名称
+
+旧代码所在文件：`layouts/_partials/sidebar/left.html`
 
 ```go-html-template
-{{ .Language.Lang }}
+{{- $currentLanguageCode := .Language.Lang -}}
+{{ if ne .Language.Lang $currentLanguageCode }}
+    <a href="{{ .RelPermalink }}">{{ .Language.LanguageName }}</a>
+{{ end }}
 ```
 
-新写法：
+当前代码所在文件：`layouts/_partials/sidebar/left.html`
 
 ```go-html-template
-{{ .Language.Name }}
+{{- $currentLanguageCode := .Language.Name -}}
+{{ if ne .Language.Name $currentLanguageCode }}
+    <a href="{{ .RelPermalink }}">{{ .Language.Label }}</a>
+{{ end }}
 ```
 
-这一替换用于语言切换器和中英文界面文本判断。虽然 English 当前已禁用，仍提前迁移这些代码，避免以后重新启用时再次出现旧接口。
+同一文件中的移动端语言缩写、桌面语言链接和多语言下拉列表都遵守相同分工：比较语言时使用 `.Language.Name`，显示完整名称时使用 `.Language.Label`。虽然 English 已禁用，这些分支仍保留，以便以后重新启用时不恢复旧接口。
 
 ### 代码展开按钮
 
-完整扫描还发现以下项目覆盖文件保留了 `.Site.Language.Lang`：
+旧代码所在文件：`layouts/_partials/footer/custom.html`
+
+```go-html-template
+expandBtn.dataset.expand = "{{ if eq .Site.Language.Lang `en` }}Expand Code{{ else }}展开代码{{ end }}";
+expandBtn.dataset.collapse = "{{ if eq .Site.Language.Lang `en` }}Collapse Code{{ else }}收起代码{{ end }}";
+```
+
+当前代码所在文件：`layouts/_partials/footer/custom.html`
+
+```go-html-template
+expandBtn.dataset.expand = "{{ if eq .Site.Language.Name `en` }}Expand Code{{ else }}展开代码{{ end }}";
+expandBtn.dataset.collapse = "{{ if eq .Site.Language.Name `en` }}Collapse Code{{ else }}收起代码{{ end }}";
+```
+
+这两处只判断语言键，因此从 `Lang` 迁移到 `Name`。按钮的高度判断、展开、折叠和滚动逻辑均未改变。
+
+### 根覆盖层的实际调用关系
+
+当前实际生效关系如下：
 
 ```text
-layouts/_partials/footer/custom.html
+themes/stack/layouts/baseof.html
+  → partial "sidebar/left.html"
+  → layouts/_partials/sidebar/left.html（根目录覆盖）
+
+themes/stack/layouts/_partials/article/article.html
+  → partial "article/components/header"
+  → layouts/_partials/article/components/header.html（根目录覆盖）
+  → partial "article/components/details"
+  → layouts/_partials/article/components/details.html（根目录覆盖）
+
+themes/stack/layouts/_partials/footer/include.html
+  → partial "footer/custom.html"
+  → layouts/_partials/footer/custom.html（根目录覆盖）
 ```
 
-两处判断均更新为：
+因此只修改 `themes/stack/` 中的同名模板不会改变这三处当前页面行为；根覆盖文件才是运行时优先使用的版本。
 
-```go-html-template
-{{ if eq .Site.Language.Name `en` }}
-```
-
-这两处分别控制“展开代码”和“收起代码”的中英文文字。
-
-### 多站点集合统一使用 `hugo.Sites`
-
-旧模板可能从 Page 或 Site 对象读取站点集合：
-
-```go-html-template
-{{ range .Sites }}
-{{ range .Site.Sites }}
-{{ range .Page.Sites }}
-```
-
-这些入口依赖当前上下文对象，Hugo 0.156.0 起统一推荐使用全局函数：
-
-```go-html-template
-{{ range hugo.Sites }}
-```
-
-当前根目录统计页 `layouts/_default/stats.html` 使用 `hugo.Sites` 遍历已启用语言站点，再统计每个站点 `post` section 的页面。迁移只改变集合入口，不改变过滤、计数或显示顺序。
-
-### 全局数据统一使用 `hugo.Data`
-
-旧接口把全局 `data/` 暴露为站点属性：
-
-```go-html-template
-{{ .Site.Data.external }}
-```
-
-新接口直接从 Hugo 命名空间读取：
-
-```go-html-template
-{{ hugo.Data.external }}
-```
-
-这一修改影响 PhotoSwipe 和其他外部资源清单，但不改变 `data/external.yaml` 的结构。模板仍按原来的 namespace 取值，避免把 API 迁移误做成数据格式迁移。
-
-### 语言对象的字段边界
-
-本轮涉及的几个字段容易混淆：
+### Language 字段边界
 
 | 用途 | 旧写法 | 当前写法 |
 | --- | --- | --- |
-| HTML/RSS 区域标识 | `.Site.LanguageCode`、`.Language.LanguageCode` | `.Site.Language.Locale`、`.Language.Locale` |
+| HTML 或 RSS 区域标识 | `.Site.LanguageCode`、`.Language.LanguageCode` | `.Site.Language.Locale`、`.Language.Locale` |
 | 语言键 `zh`/`en` | `.Language.Lang` | `.Language.Name` |
-| 给访客显示的名称 | `.Language.LanguageName` | `.Language.Label` |
-| 文本方向 | `.Language.LanguageDirection` | `.Language.Direction` |
+| 访客可见名称 | `.Language.LanguageName` | `.Language.Label` |
+| 文字方向 | `.Language.LanguageDirection` | `.Language.Direction` |
 
-`Name`、`Label` 和 `Locale` 不是同一个概念。把界面显示文字改成 `Locale` 会显示 `zh-CN`，把 RSS 的语言改成 `Name` 则只会输出 `zh`；因此迁移必须按用途逐项替换，不能全局搜索后统一换成一个字段。
+迁移必须按语义逐项替换。把所有字段统一改成 `Locale` 会让界面显示 `zh-CN`；把 RSS 改成 `Name` 则只会输出 `zh`。
 
 ---
 
 ## 本地 Stack 主题迁移
 
-主题已经完整保存在 `themes/stack/`，因此本次直接更新本地主题中的旧接口，不依赖上游仓库修复。
+主题源码已完整保存在 `themes/stack/`，所以本次直接维护本地主题，不等待或下载上游修复。主题层修改分为“当前直接生效的基础模板”和“被根目录覆盖、但仍需要保持可用的后备模板”。
 
 ### HTML 语言属性
 
-修改位置：
-
-```text
-themes/stack/layouts/baseof.html
-```
-
-旧写法：
+旧代码所在文件：`themes/stack/layouts/baseof.html`
 
 ```go-html-template
 <html lang="{{ .Site.LanguageCode }}" dir="{{ default `ltr` .Language.LanguageDirection }}">
 ```
 
-新写法：
+当前代码所在文件：`themes/stack/layouts/baseof.html`
 
 ```go-html-template
 <html lang="{{ .Site.Language.Locale }}" dir="{{ default `ltr` .Language.Direction }}">
 ```
 
-中文页面最终应生成：
+该文件没有根目录同路径覆盖，因此它是当前所有 HTML 页面的基础模板。中文页面最终生成：
+
+**生成结果来源：** `themes/stack/layouts/baseof.html`
 
 ```html
 <html lang="zh-CN" dir="ltr">
@@ -273,39 +298,29 @@ themes/stack/layouts/baseof.html
 
 ### RSS 语言标识
 
-修改位置：
-
-```text
-themes/stack/layouts/rss.xml
-```
-
-旧写法：
+旧代码所在文件：`themes/stack/layouts/rss.xml`
 
 ```go-html-template
-{{ site.Language.LanguageCode }}
+<language>{{ site.Language.LanguageCode }}</language>
 ```
 
-新写法：
+当前代码所在文件：`themes/stack/layouts/rss.xml`
 
 ```go-html-template
-{{ site.Language.Locale }}
+<language>{{ site.Language.Locale }}</language>
 ```
 
-生成的 RSS 应包含：
+该文件同样没有根目录覆盖。中文 RSS 最终生成：
+
+**生成结果来源：** `themes/stack/layouts/rss.xml`
 
 ```xml
 <language>zh-CN</language>
 ```
 
-### PhotoSwipe 数据
+### PhotoSwipe 外部资源数据
 
-修改位置：
-
-```text
-themes/stack/layouts/_partials/article/components/photoswipe.html
-```
-
-旧写法：
+旧代码所在文件：`themes/stack/layouts/_partials/article/components/photoswipe.html`
 
 ```go-html-template
 {{ $style := .Site.Data.external.PhotoSwipe.Style }}
@@ -313,7 +328,7 @@ themes/stack/layouts/_partials/article/components/photoswipe.html
 {{ $lightbox := .Site.Data.external.PhotoSwipe.Lightbox }}
 ```
 
-新写法：
+当前代码所在文件：`themes/stack/layouts/_partials/article/components/photoswipe.html`
 
 ```go-html-template
 {{ $style := hugo.Data.external.PhotoSwipe.Style }}
@@ -321,76 +336,103 @@ themes/stack/layouts/_partials/article/components/photoswipe.html
 {{ $lightbox := hugo.Data.external.PhotoSwipe.Lightbox }}
 ```
 
-数据来源、资源地址和加载顺序均未改变，只有读取数据的 Hugo API 发生变化。
+数据仍来自本地主题的 `themes/stack/data/external.toml`，字段名、资源 URL、动态导入和加载顺序均未改变。Hugo 会把主题数据合并到 `hugo.Data`；这里只把模板入口从 Site 对象迁移到 Hugo 全局命名空间。
 
-### 通用外部资源数据
+### 通用外部资源 helper
 
-修改位置：
-
-```text
-themes/stack/layouts/_partials/helper/external.html
-```
-
-旧写法：
+旧代码所在文件：`themes/stack/layouts/_partials/helper/external.html`
 
 ```go-html-template
-{{ $List := index .Context.Site.Data.external .Namespace }}
+{{- $List := index .Context.Site.Data.external .Namespace -}}
 ```
 
-新写法：
+当前代码所在文件：`themes/stack/layouts/_partials/helper/external.html`
 
 ```go-html-template
-{{ $List := index hugo.Data.external .Namespace }}
+{{- $List := index hugo.Data.external .Namespace -}}
 ```
 
-### 主题后备模板
+`.Namespace`、脚本或样式类型判断、SRI 和 `crossorigin` 输出均未修改。模板仍读取同一份 `external` 数据，只是不再经过 `.Context.Site.Data`。
 
-以下主题文件当前可能被根目录同路径文件覆盖，但仍一并完成迁移：
+### 主题后备模板与根覆盖
 
-```text
-themes/stack/layouts/_partials/article/components/details.html
-themes/stack/layouts/_partials/sidebar/left.html
+旧主题后备代码所在文件：`themes/stack/layouts/_partials/article/components/details.html`
+
+```go-html-template
+<a href="{{ .RelPermalink }}" class="link">{{ .Language.LanguageName }}</a>
 ```
 
-其中完成了以下替换：
+当前主题后备代码所在文件：`themes/stack/layouts/_partials/article/components/details.html`
 
-```text
-.Language.LanguageName -> .Language.Label
-.Language.Lang         -> .Language.Name
+```go-html-template
+<a href="{{ .RelPermalink }}" class="link">{{ .Language.Label }}</a>
 ```
 
-这样即使以后删除根目录覆盖文件，主题后备模板也不会恢复使用旧接口。
+当前优先生效文件：`layouts/_partials/article/components/details.html`
+
+```go-html-template
+<a href="{{ .RelPermalink }}" class="link">{{ .Language.Label }}</a>
+```
+
+旧主题后备代码所在文件：`themes/stack/layouts/_partials/sidebar/left.html`
+
+```go-html-template
+{{- $currentLanguageCode := .Language.Lang -}}
+{{ if eq .Language.Lang $target.Language.Lang }}
+<option value="{{ $target.RelPermalink }}" {{ if eq $target.Language.Lang $currentLanguageCode }}selected{{ end }}>{{ .Language.LanguageName }}</option>
+```
+
+当前主题后备代码所在文件：`themes/stack/layouts/_partials/sidebar/left.html`
+
+```go-html-template
+{{- $currentLanguageCode := .Language.Name -}}
+<option value="{{ $target.RelPermalink }}" {{ if eq $target.Language.Name $currentLanguageCode }}selected{{ end }}>{{ .Language.Label }}</option>
+```
+
+当前优先生效文件：`layouts/_partials/sidebar/left.html`
+
+```go-html-template
+{{- $currentLanguageCode := .Language.Name -}}
+<option value="{{ .RelPermalink }}" {{ if eq .Language.Name $currentLanguageCode }}selected{{ end }}>{{ .Language.Label }}</option>
+```
+
+这两个主题文件当前确定被根目录同路径文件覆盖，并非“可能被覆盖”。仍然迁移主题副本，是为了在将来删除根覆盖层时，后备模板不会重新暴露旧接口。
 
 ---
 
 ## 统一 GitHub Actions 的 Hugo 版本
 
-修改位置：
+### 旧版本变量没有控制安装步骤
 
-```text
-.github/workflows/deploy.yml
-```
-
-实施前虽然定义了：
+旧代码所在文件：`.github/workflows/deploy.yml`
 
 ```yaml
-HUGO_VERSION: 0.154.2
+env:
+  HUGO_VERSION: 0.154.2
 ```
 
-但安装步骤使用的是：
+旧代码所在文件：`.github/workflows/deploy.yml`
 
 ```yaml
-hugo-version: 'latest'
+- name: Setup Hugo
+  uses: peaceiris/actions-hugo@v3
+  with:
+    hugo-version: 'latest'
+    extended: true
 ```
 
-因此版本变量没有被使用，而且每次部署可能获得不同 Hugo 版本。本地 Stack 主题声明的最低 Hugo 版本已经是 0.157.0，旧的 0.154.2 也不再适合作为版本基准。
+这两个片段彼此脱节：`HUGO_VERSION` 虽然存在，但安装步骤没有引用它。CI 会跟随 `latest` 变化，无法保证与本地复现环境一致。本地 Stack 的 `themes/stack/theme.toml` 又声明 `min_version = "0.157.0"`，所以原来未生效的 0.154.2 也不能作为当前主题基线。
 
-更新后统一为：
+### 当前版本锁定
+
+当前代码所在文件：`.github/workflows/deploy.yml`
 
 ```yaml
 env:
   HUGO_VERSION: 0.164.0
 ```
+
+当前代码所在文件：`.github/workflows/deploy.yml`
 
 ```yaml
 - name: Setup Hugo
@@ -400,106 +442,129 @@ env:
     extended: true
 ```
 
-这样本地和 GitHub Actions 使用相同的 Hugo 0.164.0 Extended。后续升级时只需要修改 `HUGO_VERSION`，并先在本地执行严格构建验证。
+主题最低版本所在文件：`themes/stack/theme.toml`
 
-本次只修改工作流文件，没有执行 Git 提交、推送或线上部署，因此不会立即触发 GitHub Actions。
+```toml
+min_version = "0.157.0"
+```
+
+当前 CI 和本地验证都以 Hugo 0.164.0 Extended 为基线。以后升级时只修改 `.github/workflows/deploy.yml` 的 `HUGO_VERSION`，但应先用目标版本完成本地兼容性审计。
+
+### 提交与部署时间线
+
+“修改工作流后尚未提交，因此不会立即触发 Actions”只描述了最初实施结束、提交发生之前的瞬时状态。之后这些修改与配置、根模板和本地主题迁移一起进入提交 `dc50f23`。当前本地 `main` 和 `origin/main` 的历史都包含该提交，所以不能再把它描述成从未提交或从未推送。
+
+提交 `dc50f23` 不只修改工作流，还包含本节记录的兼容性迁移以及同批次的 Footer、文章尾部信息框和隐私政策等既有工程修改。本日志只详细记录其中与弃用接口和版本统一直接相关的部分。
 
 ---
 
-## LOG 文章重组
+## LOG 文件重组时间线
 
-原文件：
+Hugo 主日志最初的文件：`content/post/LOG.md`
 
-```text
-content/post/LOG.md
-```
+提交 `dc50f23` 中更名为：`content/post/LOG-Hugo.md`
 
-更名为：
+早期日志曾写成“`content/post/LOG-Hugo.md` 已添加 `/post/log/` alias”，但重新检查提交 `dc50f23`、提交 `910c576` 和当前文件后，均没有找到该字段。因此准确历史是：文件发生了重命名，旧地址 alias 并未实际落盘。若以后确实需要保留 `/post/log/`，应另行修改 `content/post/LOG-Hugo.md` 的 front matter；本次只修正文档，不替其他文章补配置。
 
-```text
-content/post/LOG-Hugo.md
-```
+本篇兼容性日志在提交 `dc50f23` 中建立为：`content/post/LOG-全面更新.md`
 
-为避免已经发布的旧地址 `/post/log/` 失效，在文章 Front Matter 中增加：
+提交 `910c576` 中重命名为当前文件：`content/post/LOG-Hugo全面更新.md`
+
+当前兼容旧地址的代码所在文件：`content/post/LOG-Hugo全面更新.md`
 
 ```yaml
 aliases:
-    - /post/log/
+    - /post/log-全面更新/
 ```
 
-本次全面更新记录保存为：
-
-```text
-content/post/LOG-全面更新.md
-```
-
-以上是本次全面更新建立时的文件名；当前文件为 `content/post/LOG-Hugo全面更新.md`，旧地址 `/post/log-全面更新/` 由 front matter 中的 `aliases` 保留。
-
-两篇文章的分类均为：
+当前分类代码所在文件：`content/post/LOG-Hugo全面更新.md`
 
 ```yaml
 categories:
     - LOG
 ```
 
+因此文件名、当前文章 URL 和旧 URL alias 是三件不同的事情；后续再重命名文件时，也必须检查现有 alias 是否仍被保留。
+
 ---
 
+## 当前源码审计与未完成项
 
-## 本次更新后的维护规则
+### 已完成迁移的接口
 
-以后升级 Hugo 时建议按以下顺序进行：
-
-1. 先修改本地 Hugo 版本并执行普通构建。
-2. 阅读全部警告，禁止直接隐藏警告。
-3. 按 Hugo 官方迁移说明更新配置和模板。
-4. 执行 `hugo --gc --minify --panicOnWarning`。
-5. 检查 HTML、RSS、图片、统计页和移动端页面。
-6. 本地验证全部通过后，再同步修改 GitHub Actions 的 `HUGO_VERSION`。
-7. 最后才提交和推送。
-
-不建议通过把 Hugo 降到 0.155 以下来回避警告，因为本地 Stack 主题最低版本已经是 0.157.0，而且降级无法解决未来兼容问题。
-
-
-> 本次更新的目标不是让警告暂时消失，而是让配置、本地主题和自动部署共同使用同一套仍受 Hugo 支持的接口。
-
-### 当前源码复查与尚未完成项
-
-在本次文档恢复时重新扫描 `layouts/`、`themes/stack/layouts/` 和 `config/_default/`。上述语言、Sites 和 Data 旧接口已经不再出现，但仍发现一个不同批次的弃用调用：
+当前重新扫描了以下范围：
 
 ```text
-layouts/_partials/footer/custom.html:70
+config/_default/
+layouts/
+themes/stack/layouts/
+.github/workflows/deploy.yml
 ```
 
-当前条件为：
+历史迁移涉及的 `languageCode`、`languageName`、`languageDirection`、`.Language.Lang`、`.Site.LanguageCode`、`.Language.LanguageCode`、`.Site.Data` 和旧 `.Sites` 调用已经不再出现在这些源码中。
+
+### 当前仍存在的 `.IsNode`
+
+当前未完成代码所在文件：`layouts/_partials/footer/custom.html:70`
 
 ```go-html-template
 {{ if and .Site.Params.comments.waline.serverURL (or .IsHome .IsNode (eq .Params.comments false)) }}
 ```
 
-`.Page.IsNode` 在较新的 Hugo 中已经弃用。它用于判断当前页面是否为列表节点，以便在首页、列表页或关闭评论的页面批量加载 Waline 浏览量脚本。后续实现应根据真实语义改成 `.IsBranch`，或在确认所有页面类型后使用 `not .IsPage`。这不是简单的字符替换：两者对 home、section、taxonomy、term 的含义必须先复测。
+这个条件控制 Waline 浏览量脚本是否在首页、列表节点或主动关闭评论的页面加载。源码中只有这一处 `.IsNode` 调用，但模板会为多个页面执行，所以一次完整 INFO 构建会重复报告同一调用。
 
-本轮任务只重写日志，不修改模板，因此该调用明确记录为“当前未完成项”，不将它伪装成已经修复。还要注意：
+Hugo 0.164.0 当前给出的迁移提示是使用 `.Page.IsBranch` 或 `not .Page.IsPage`。二者语义并不完全相同：修改前必须分别验证 home、section、taxonomy、term、普通文章和自定义页面，确认哪些页面应该批量加载 Waline 浏览量脚本。这里只记录问题，不在日志整理任务中修改模板。
 
-```bash
-hugo --gc --minify --panicOnWarning
-```
+### 严格构建与 INFO 审计的区别
 
-只会把 warning 提升为失败；部分弃用信息可能在 `INFO` 级别输出。升级审计还应执行：
+严格构建命令，执行目录：`D:/Hugo/LKWLblog`
 
 ```bash
-hugo --gc --minify --logLevel info
+hugo --gc --minify --panicOnWarning --destination "<temporary-output-dir>"
 ```
 
-并在输出中搜索 `deprecated`。只有“严格构建退出码为 0”和“INFO 日志中没有待处理的弃用接口”同时满足，才能表述为完整迁移。
-
-### 构建前后统计的记录方式
-
-每次兼容性迁移都应保留同一组可比指标：Hugo 版本、语言、Pages、Static files、Processed images、Aliases、warning 数量和退出码。命令可写为：
+INFO 审计命令，执行目录：`D:/Hugo/LKWLblog`
 
 ```bash
-hugo version
-hugo --gc --minify --panicOnWarning --destination "D:/Hugo/tmp-build"
-hugo --gc --minify --logLevel info --destination "D:/Hugo/tmp-build-info"
+hugo --gc --minify --logLevel info --destination "<temporary-output-dir>"
 ```
 
-页面或图片数量因为新内容而变化并不自动表示回归；真正需要调查的是同一内容基线下页面突然减少、别名消失、资源处理失败或构建退出码改变。最终浏览器检查还要覆盖 HTML 的 `lang`/`dir`、RSS `<language>`、PhotoSwipe 资源和统计页，证明 API 迁移没有改变页面行为。
+`--panicOnWarning` 只会把 warning 提升为失败；`.IsNode` 的弃用信息当前属于 INFO。因而“严格构建退出码为 0”与“没有弃用接口”不是同一结论。
+
+本次日志审计前的当前构建结果为：
+
+**当前构建输出（不是配置文件）：**
+
+```text
+Hugo:             0.164.0 Extended
+Pages:            81
+Static files:     151
+Processed images: 50
+Aliases:          33
+Build exit code:  0
+```
+
+同一次 INFO 构建在源码只有一个 `.IsNode` 调用点的情况下输出了 51 条 `.Page.IsNode` 弃用信息。这是该 partial 被多次渲染的结果，不代表源码中存在 51 处不同问题。
+
+只有严格构建通过、INFO 日志不再包含待处理弃用接口，并且页面行为验证通过，才能表述为完成一次全面兼容性迁移。
+
+---
+
+## 后续升级与验证流程
+
+以后升级 Hugo 时按以下顺序处理：
+
+1. 在 `D:/Hugo/LKWLblog` 确认工作区已有修改，避免覆盖用户内容。
+2. 使用目标 Hugo 版本执行普通构建和 `--logLevel info` 构建。
+3. 按警告逐项定位 `config/_default/`、根 `layouts/` 和 `themes/stack/layouts/`。
+4. 先修改当前真正生效的根覆盖文件，再同步仍需保留的主题后备文件。
+5. 执行 `hugo --gc --minify --panicOnWarning`，不得通过隐藏警告或降低版本制造通过。
+6. 对比 Hugo 版本、Pages、Static files、Processed images、Aliases、弃用信息数量和退出码。
+7. 检查生成 HTML 的 `lang`/`dir`、RSS `<language>`、统计页、语言界面、PhotoSwipe 和外部资源。
+8. 使用桌面和窄屏浏览器确认页面无资源错误或布局回归。
+9. 本地验证完成后，再同步 `.github/workflows/deploy.yml` 的 `HUGO_VERSION`。
+10. Git 提交、推送和部署仍作为独立外部操作确认。
+
+页面或图片数量会随内容增长而变化，不能直接拿历史的 29 页与当前 81 页判断回归。有效比较必须使用同一内容基线；真正需要调查的是同一基线下页面突然减少、alias 消失、资源处理失败、输出语言错误或退出码改变。
+
+> 兼容性维护的目标不是暂时让黄色警告消失，而是让当前配置、实际生效模板、本地主题后备和 CI 使用同一套可复现的 Hugo 接口。
