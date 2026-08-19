@@ -1,5 +1,5 @@
 ---
-title: "Hugo Stack 部署与主题个性化记录"
+title: "Hugo 部署与主题个性化记录"
 description: "记录 Hexo 到 Hugo 的迁移、Stack 主题本地化、GitHub Pages 部署和站点个性化配置。"
 date: 2026-08-11T13:12:11+08:00
 categories:
@@ -14,7 +14,7 @@ comments: true
 draft: false
 ---
 
-由于计划从 Hexo 迁移到 Hugo ，因此先把 Hugo+Stack 框架建好。本文记录了 Hugo+stack 部署和主题个性化阶段的过程；Hugo 弃用接口迁移单独记录在 [LOG-全面更新](../log-全面更新/)，书与影栏目记录在 [LOG-栏目扩展](../log-栏目扩展/)，日常操作指南记录在 [LOG-使用手册](../log-使用手册/)。
+由于计划从 Hexo 迁移到 Hugo ，因此先把 Hugo+Stack 框架建好。本文记录了 Hugo+stack 部署和主题个性化阶段的过程；Hugo 弃用接口迁移单独记录在 [Hugo 弃用接口更新记录](../log-全面更新/)，书与影栏目记录在 [Hugo 摄影与书与影栏目扩展记录](../log-栏目扩展/)，日常操作指南记录在 [Hugo-Stacker 个性化主题使用手册](../log-使用手册/)。
 >本次 Hugo 的搭建与迁移所涉及的 **代码工作** 全部由 `gpt-5.6 Sol-medium` 进行
 >
 >毕竟我也看不懂 Hugo 的这些新编译语言 (

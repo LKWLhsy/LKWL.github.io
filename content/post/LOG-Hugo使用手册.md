@@ -1,5 +1,5 @@
 ---
-title: "Hugo Stack 使用手册"
+title: "Hugo-Stacker 个性化主题使用手册"
 description: "面向日常维护的 Hugo Stack 配置、写作、摄影、书与影和发布指南。"
 date: 2026-08-12T18:00:00+08:00
 categories:
@@ -26,7 +26,7 @@ aliases:
 
 ---
 
-这是一份日常维护手册，帮助你在不重新阅读迁移历史的情况下修改站点。部署和主题演进见 [LOG-Hugo](../log-hugo/)，弃用接口迁移见 [LOG-Hugo 全面更新](../log-hugo全面更新/)，摄影与书与影的实现记录见 [LOG-Hugo 栏目扩展](../log-hugo栏目扩展/)。
+这是一份日常维护手册，目的是协助自己修改站点。部署和主题演进见 [Hugo 部署与主题个性化记录](../log-hugo/)，弃用接口迁移见 [Hugo 弃用接口更新记录](../log-hugo全面更新/)，摄影与书与影的实现记录见 [Hugo 摄影与书与影栏目扩展记录](../log-hugo栏目扩展/)。
 
 ## 项目目录
 
@@ -64,7 +64,7 @@ config/_default/menu.zh.toml      中文菜单
 config/_default/markup.toml       Goldmark 和代码高亮
 ```
 
-模板读取 `.Site.Params.footer.enabled` 时，Hugo 已经把全局 `params.toml` 与当前语言参数合并。结构开关放在全局文件，中文句子放在 `params.zh.toml`，这样以后恢复 English 时不会把中文文字误用到英文站点。
+模板读取 `.Site.Params.footer.enabled` 时，Hugo 已经把全局 `params.toml` 与当前语言参数合并。结构开关放在全局文件，中文句子放在 `params.zh.toml`，英文配置放在 `params.en.toml` ，独立存在，互不影响。
 
 配置并不是唯一的优先级。模板选择从具体到通用大致为：
 
@@ -75,7 +75,7 @@ config/_default/markup.toml       Goldmark 和代码高亮
   -> themes/stack 中的通用模板
 ```
 
-例如摄影列表优先选择 `layouts/photography/list.html`，不会进入 `layouts/list.html`；普通 section 才会使用根目录 `layouts/list.html`。排查“修改没有生效”时，先找实际模板入口，而不是继续叠加 CSS。
+例如摄影列表相关配置优先选择 `layouts/photography/list.html`，不会进入 `layouts/list.html`，因为这属于特色模板；普通 section 才会使用根目录 `layouts/list.html`。排查“修改没有生效”时，先找实际模板入口。
 
 ## 站点和语言配置
 
@@ -97,15 +97,13 @@ theme = "stack"
 
 要重新启用 English，删除或改为 `false`，同时检查英文内容、菜单和翻译是否完整。暂时关闭 English 不会删除英文文件，只是不生成英文页面。
 
-Hugo 0.164.0 使用新版字段：
+Hugo 0.164.0 使用新版字段标签：
 
 ```text
 languageCode      -> locale
 languageName      -> label
 languageDirection -> direction
 ```
-
-不要为了消除警告把新字段改回旧字段。
 
 ## Markdown、Goldmark 与 MathJax
 
@@ -117,7 +115,7 @@ Hugo 使用 Goldmark 将 Markdown 转换为 HTML，MathJax 再在浏览器中扫
 math: true
 ```
 
-Stack 会在 `.Params.math` 或全站 `article.math` 为真时加载 `layouts/_partials/article/components/math.html`。当前站点按文章启用，普通文章不会加载 MathJax 主脚本和字体。
+Stack 会在 `.Params.math` 或全站 `article.math` 为真时加载 `layouts/_partials/article/components/math.html`。当前站点按文章具体配置启用，默认文章不会加载 MathJax 主脚本和字体。
 
 ### `markup.toml` 的作用
 
@@ -274,7 +272,7 @@ themes/stack/layouts/baseof.html
 {{- end -}}
 ```
 
-关闭方法：将单项 `show...` 改为 `false` 会隐藏对应内容，但 `showPrivacyLink` 位于 `showPoweredBy` 的外层条件之内；`showPoweredBy = false` 会同时隐藏主题署名和隐私链接。将 `enabled = false` 会关闭整个自定义 Footer。排列顺序由模板中的块顺序决定，文字由语言参数决定。常见错误是直接删模板中的 HTML，导致以后无法仅靠配置恢复；另一个错误是把站内 `privacyLink` 写成 `/privacy/`，在 GitHub Pages 项目站点中可能指向账户根目录，应写 `privacy/` 并让 `relLangURL` 补全子路径。
+关闭方法：将单项 `show...` 改为 `false` 会隐藏对应内容，但 `showPrivacyLink` 位于 `showPoweredBy` 的外层条件之内，属于例外；`showPoweredBy = false` 会同时隐藏主题署名和隐私链接。将 `enabled = false` 会关闭整个自定义 Footer。排列顺序由模板中的块顺序决定，文字由语言参数决定。常见错误是直接删模板中的 HTML，导致以后无法仅靠配置恢复；另一个错误是把站内 `privacyLink` 写成 `/privacy/`，在 GitHub Pages 项目站点中可能指向账户根目录，应写 `privacy/` 并让 `relLangURL` 补全子路径。
 
 ## 文章尾部信息框
 
@@ -377,7 +375,7 @@ Stack 的基础栅格位于 `themes/stack/assets/scss/grid.scss`，但日常调�
 左栏（站点信息、头像、菜单） | 中栏（文章或列表） | 右栏（TOC 和 widgets）
 ```
 
-`themes/stack/layouts/baseof.html` 根据 widgets 配置选择布局：存在启用的 widgets 时使用 `.container.extended`，否则使用 `.container.compact`。当前配置包含首页 widgets 和文章 TOC，因此通常使用 `extended`。
+`themes/stack/layouts/baseof.html` 根据 config/default/ 配置文件中的 widgets 配置选择布局：存在启用的 widgets 时使用 `.container.extended`，否则使用 `.container.compact`。当前配置包含首页 widgets 和文章 TOC，因此通常使用 `extended`。
 
 ### 当前 `extended` 宽度
 
@@ -543,7 +541,7 @@ layouts/home.html
 
 当前根目录不存在 `layouts/_partials/sidebar/right.html` 覆盖文件，因此实际使用上述主题 partial。
 
-`themes/stack/layouts/baseof.html` 负责接收 `right-sidebar` block；检测到 widget 配置后使用 `.container.extended`，为三栏留出宽度。关闭右侧栏时，注释或清空 `widgets.homepage`；恢复中栏双列卡片时，把 `grid` 改回 `true`。两者可以独立组合。
+`themes/stack/layouts/baseof.html` 负责接收 `right-sidebar` block；检测到 widget 配置后使用 `.container.extended`，为三栏留出宽度。关闭右侧栏时: 注释或清空 `widgets.homepage`；恢复中栏双列卡片时，把 `grid` 改回 `true`。两者可以独立组合。
 
 `layouts/list.html` 不控制首页，它覆盖普通 section、taxonomy 和 term 列表。本站在其中的主要改动是把 `helper/image` 换成 `helper/card-image` 以支持默认封面；它仍保留 Stack 的 `right-sidebar` 定义。摄影页使用更具体的 `layouts/photography/list.html`，书与影使用 `layouts/page/books-and-film.html`，所以不会进入通用列表模板，也不会自动继承普通列表右栏。
 
@@ -622,7 +620,7 @@ resources:
           caption: "彩虹从山谷上方延伸到城市边缘"
 ```
 
-`alt` 用于无障碍和图片加载失败时的替代文字，`caption` 显示在图片下方。正式文章照片用 Page Bundle 资源；默认封面是站点级回退资源，两者不要混用。
+`alt` 用于无障碍和图片加载失败时的替代文字，`caption` 显示在图片下方。正式文章照片用 Page Bundle 资源；默认封面是全站统一的，两者不要混用。
 
 ## 使用 `photo-gallery`
 

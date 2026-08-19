@@ -1,5 +1,5 @@
 ---
-title: "LOG-迁移"
+title: "LOG-迁移记录"
 description: "记录 Hexo 文章、图片迁移到 Hugo 的实际过程、适配项和验证结果。"
 date: 2026-08-12T21:41:42+08:00
 categories:
@@ -8,10 +8,9 @@ tags:
     - Hexo
     - Hugo
     - 迁移
-    - Page Bundle
 math: false
 comments: true
-draft: false
+draft: true
 ---
 >本次 Hugo 的搭建与迁移所涉及的 **代码工作** 全部由 `gpt-5.6 Sol-medium` 进行
 >

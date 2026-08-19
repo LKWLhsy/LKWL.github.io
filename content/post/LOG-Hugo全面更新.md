@@ -41,7 +41,7 @@ Hugo 官方参考资料：
 
 ## 实施前基线
 
-这里的“实施前”专指兼容性迁移提交 `dc50f23` 形成之前的站点，不代表当前工作区。迁移前使用 Hugo 0.164.0 Extended 完成普通构建，同时收集 `deprecated` 信息，得到以下历史快照：
+迁移前使用 Hugo 0.164.0 Extended 完成普通构建，同时收集 `deprecated` 信息，得到以下历史快照：
 
 **历史构建输出（不是配置文件）：**
 
@@ -450,42 +450,6 @@ min_version = "0.157.0"
 
 当前 CI 和本地验证都以 Hugo 0.164.0 Extended 为基线。以后升级时只修改 `.github/workflows/deploy.yml` 的 `HUGO_VERSION`，但应先用目标版本完成本地兼容性审计。
 
-### 提交与部署时间线
-
-“修改工作流后尚未提交，因此不会立即触发 Actions”只描述了最初实施结束、提交发生之前的瞬时状态。之后这些修改与配置、根模板和本地主题迁移一起进入提交 `dc50f23`。当前本地 `main` 和 `origin/main` 的历史都包含该提交，所以不能再把它描述成从未提交或从未推送。
-
-提交 `dc50f23` 不只修改工作流，还包含本节记录的兼容性迁移以及同批次的 Footer、文章尾部信息框和隐私政策等既有工程修改。本日志只详细记录其中与弃用接口和版本统一直接相关的部分。
-
----
-
-## LOG 文件重组时间线
-
-Hugo 主日志最初的文件：`content/post/LOG.md`
-
-提交 `dc50f23` 中更名为：`content/post/LOG-Hugo.md`
-
-早期日志曾写成“`content/post/LOG-Hugo.md` 已添加 `/post/log/` alias”，但重新检查提交 `dc50f23`、提交 `910c576` 和当前文件后，均没有找到该字段。因此准确历史是：文件发生了重命名，旧地址 alias 并未实际落盘。若以后确实需要保留 `/post/log/`，应另行修改 `content/post/LOG-Hugo.md` 的 front matter；本次只修正文档，不替其他文章补配置。
-
-本篇兼容性日志在提交 `dc50f23` 中建立为：`content/post/LOG-全面更新.md`
-
-提交 `910c576` 中重命名为当前文件：`content/post/LOG-Hugo全面更新.md`
-
-当前兼容旧地址的代码所在文件：`content/post/LOG-Hugo全面更新.md`
-
-```yaml
-aliases:
-    - /post/log-全面更新/
-```
-
-当前分类代码所在文件：`content/post/LOG-Hugo全面更新.md`
-
-```yaml
-categories:
-    - LOG
-```
-
-因此文件名、当前文章 URL 和旧 URL alias 是三件不同的事情；后续再重命名文件时，也必须检查现有 alias 是否仍被保留。
-
 ---
 
 ## 当前源码审计与未完成项
@@ -505,7 +469,7 @@ themes/stack/layouts/
 
 ### 当前仍存在的 `.IsNode`
 
-当前未完成代码所在文件：`layouts/_partials/footer/custom.html:70`
+当前未完成代码所在文件：`layouts/_partials/footer/custom.html: 70 line`
 
 ```go-html-template
 {{ if and .Site.Params.comments.waline.serverURL (or .IsHome .IsNode (eq .Params.comments false)) }}
