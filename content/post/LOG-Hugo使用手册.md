@@ -128,8 +128,8 @@ Markdown 配置位于 `config/_default/markup.toml`：
 [goldmark.extensions.passthrough]
     enable = true
     [goldmark.extensions.passthrough.delimiters]
-        block  = [['\[', '\]'], ['$$', '$$']]
-        inline = [['\(', '\)']]
+        block  = [['$$', '$$'], ['\[', '\]']]
+        inline = [['$', '$'], ['\(', '\)']]
 ```
 
 `[goldmark.renderer] unsafe = true` 允许 Markdown 正文中的原始 HTML，例如 `<details>`、`<iframe>` 或自定义 `<div>`，直接进入最终页面。它与 MathJax 没有直接关系；设为 `false` 时，Goldmark 会省略正文中的原始 HTML。本站内容由自己维护，因此保留 `true`，但不要在不可信投稿或外部同步内容中直接允许任意 HTML。
@@ -140,12 +140,12 @@ Markdown 配置位于 `config/_default/markup.toml`：
 
 | 配置 | 用途 | 建议 |
 | --- | --- | --- |
-| `\[...\]` | 块公式 | 新文章优先使用 |
-| `$$...$$` | 块公式兼容写法 | 可读取迁移内容，但不作为首选 |
-| `\(...\)` | 行内公式 | 新文章统一使用 |
-| `$...$` | MathJax 能识别，但未登记为 Goldmark passthrough | 不建议在 Markdown 正文使用 |
+| `$$...$$` | 块公式 | 新文章优先使用 |
+| `\[...\]` | 块公式兼容写法 | 可读取迁移内容，但不作为首选 |
+| `$...$` | 行内公式 | 新文章优先使用 |
+| `\(...\)` | 行内公式兼容写法 | 可读取迁移内容，但不作为首选 |
 
-虽然当前 MathJax 配置包含单美元分隔符，Goldmark passthrough 并不保护 `$...$`。公式中出现 Markdown 特殊字符时可能在 MathJax 运行前已经被改写，因此新文章应使用 `\(...\)`。
+当前 `markup.toml` 已同时登记 `$...$` 与 `\(...\)` 为 Goldmark passthrough 行内分隔符。新文章统一使用 `$...$`，旧内容中的 `\(...\)` 仍可兼容。
 
 完整处理流程是：
 
@@ -163,46 +163,46 @@ Markdown 文章
 行内公式：
 
 ```markdown
-轨道偏心率记为 \(e\)，半长轴记为 \(a\)。
+轨道偏心率记为 $e$，半长轴记为 $a$。
 ```
 
 普通块公式：
 
 ```markdown
-\[
+$$
 E^2 = p_t^2 + m^2
-\]
+$$
 ```
 
 需要 AMS 自动编号的多行公式：
 
 ```markdown
-\[
+$$
 \begin{align}
 E &= mc^2, \\
 p^2 &= E^2-m^2, \\
 L_z &= r^2 \dot{\phi}.
 \end{align}
-\]
+$$
 ```
 
 不需要编号的行在行末写 `\notag`：
 
 ```markdown
-\[
+$$
 \begin{align}
 f(r) &= r^2 + a^2 \notag \\
      &= \Delta + 2Mr.
 \end{align}
-\]
+$$
 ```
 
 需要指定编号时使用 `\tag{...}`：
 
 ```markdown
-\[
+$$
 E = mc^2 \tag{A.1}
-\]
+$$
 ```
 
 不要同时给同一行使用自动编号、`\tag` 和 `\notag`。公式特别长时不需要在文章中添加 HTML 或滚动代码；passthrough render hook 会自动建立横向滚动容器。短公式保持居中，只有内容实际超过正文宽度时才能横向移动。

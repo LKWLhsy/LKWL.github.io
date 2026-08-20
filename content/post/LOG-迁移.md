@@ -457,3 +457,52 @@ static/vendor/mathjax/4.1.3/
 MathJax 文件位于 `static/vendor/mathjax/4.1.3/`，已经是仓库中的静态输入。GitHub Actions 构建时 Hugo 会原样复制这些文件，不执行 npm 安装，也不从 CDN 下载 MathJax。因此 CI 只需要现有 Hugo Extended 环境；如果将来更换 MathJax 版本，必须同时更新主脚本、NewCM 字体、许可证、第三方声明和模板中的版本路径，并重新验证根路径与项目子路径。
 
 本轮验证输出到独立临时目录，没有修改 `public/` 或 `resources/`。推送和 Pages 部署属于后续外部状态操作，只有在重新确认 Git 变更范围后才执行。
+
+
+## 后续修正：LaTeX 公式统一为 `$` / `$$` 表达
+
+### 背景
+
+迁移后的 `layouts/_markup/render-passthrough.html` 将所有块公式统一输出为 `\[...\]`，行内仍输出为 `\(...\)`。该方案在 Hugo 构建和浏览器 MathJax 渲染上没有问题，但不符合日常 Markdown 写作习惯：正文使用 `$...$` / `$$...$$` 时，编辑器可以预览，而 Hugo 输出层却把 `$$` 替换成了 `\[`，导致依赖 Hugo 渲染结果的预览链路无法识别公式。
+
+### 修改文件
+
+| 文件 | 修改 |
+| --- | --- |
+| `config/_default/markup.toml` | 块公式分隔符顺序调整为 `$$` 优先，行内新增 `$...$` 支持，保留 `\[...\]` / `\(...\)` 兼容 |
+| `layouts/_markup/render-passthrough.html` | 块公式输出由 `\[{{ .Inner }}\]` 改为 `$${{ .Inner }}$$`；行内输出由 `\({{ .Inner }}\)` 改为 `${{ .Inner }}$` |
+| `content/post/LOG-Hugo使用手册.md` | 推荐写法改为 `$...$` / `$$...$$` 优先，旧写法作为兼容 |
+| 数学类博文 | 正文中的 `\[...\]` 改为 `$$...$$`，`\(...\)` 改为 `$...$` |
+
+### 关键变化
+
+修改后 render hook：
+
+```go-html-template
+{{- if eq .Type "block" -}}
+<div class="math-display-content">$${{ .Inner }}$$</div>
+{{- else -}}
+<span class="math-inline">${{ .Inner }}$</span>
+{{- end -}}
+```
+
+`markup.toml` 同步为：
+
+```toml
+[goldmark.extensions.passthrough.delimiters]
+    block  = [['$$', '$$'], ['\[', '\]']]
+    inline = [['$', '$'], ['\(', '\)']]
+```
+
+### 行为变化
+
+- 新文章统一使用 `$...$` 行内公式、`$$...$$` 块公式，Markdown 编辑器可正常预览。
+- Hugo 输出 HTML 中同样保留 `$...$` / `$$...$$`，MathJax 继续正常渲染。
+- 旧文章中的 `\[...\]` / `\(...\)` 仍然兼容，构建后会统一输出为 `$...$` / `$$...$$`。
+- 横向滚动容器和公式样式不受影响。
+
+### 验证
+
+- 运行 `hugo server -D`。
+- 使用包含 `$...$` / `$$...$$` 的测试文章确认浏览器公式渲染正常。
+- 检查旧 `\[...\]` / `\(...\)` 文章仍能正常显示。

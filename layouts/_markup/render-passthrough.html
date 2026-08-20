@@ -1,7 +1,7 @@
 {{- if eq .Type "block" -}}
 <div class="math-display-scroll" tabindex="0" role="region" aria-label="可横向滚动的数学公式">
-    <div class="math-display-content">\[{{ .Inner }}\]</div>
+    <div class="math-display-content">$${{ .Inner }}$$</div>
 </div>
 {{- else -}}
-<span class="math-inline">\({{ .Inner }}\)</span>
+<span class="math-inline">${{ .Inner }}$</span>
 {{- end -}}

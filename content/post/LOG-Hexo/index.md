@@ -85,8 +85,8 @@ deploy:
 
 #### 2025/03/17
 + 完善博客的网页图标以及个人头像
-+ 接入 mathJax 拓展（安装了 hexo-filter-mathjax ），hingle 主题获得编译 \(LaTeX\) 公式的功能。
-+ 解决的\(Latex\)公式换行问题;
++ 接入 mathJax 拓展（安装了 hexo-filter-mathjax ），hingle 主题获得编译 $LaTeX$ 公式的功能。
++ 解决的$Latex$公式换行问题;
 + 卸载了 hexo-renderer-prismjs ，安装了 prismjs 。 
 
 #### 2025/03/18
@@ -104,10 +104,10 @@ deploy:
 
 #### 代办项
 + 完善文章格式
-+ \(Latex\)公式手机浏览超出页面问题 
++ $Latex$公式手机浏览超出页面问题 
 
 #### Note
-1. 关于 \(Latex\) 公式问题（基于 GPT-4o 解决）  
+1. 关于 $Latex$ 公式问题（基于 GPT-4o 解决）  
 网上诸多解决方法均没有用，于是求助与GPT进行解决。  
 在 _config.yml 中添加代码解锁利用 mathjax 进行 Latex 公式编译功能
 ```yml
@@ -126,7 +126,7 @@ math:
 
 随后在切到主题目录下的路径：\themes\Hingle-main\layout\_partial 文件中的 head.ejs 文件末尾中添加相应代码调用（问 GPT 即可，css 格式我不知道怎么用 hexo 正常编译）。  
 
-在此基础上 hexo 还存在对于公式太长原有 \(Latex\) 语法下行间公式使用 \\ 无法换行的问题，很可能是 Markdown 解析器把 \ 吞掉了；可以通过多添加一个 \ 进行转译：  
+在此基础上 hexo 还存在对于公式太长原有 $Latex$ 语法下行间公式使用 \\ 无法换行的问题，很可能是 Markdown 解析器把 \ 吞掉了；可以通过多添加一个 \ 进行转译：  
 例如：
 ```markdown
 $$
